@@ -9,12 +9,23 @@ if ! command -v brew > /dev/null 2>&1; then
 fi
 
 packages=(
+	"git"
+	"vim"
+	"rsync"
+	"golang"
+	"rust"
+	"python"
+	"lua"
+	"nodejs"
+	"kubectl"
+	"ffmpeg"
+	"ripgrep"
 	"apifox"
 	"wechat"
 	"wechatwork"
 	"dingtalk"
 	"google-chrome"
-	"microsoft-remote-desktop"
+	"windows-app"
 	"navicat-premium"
 	"openvpn-connect"
 	"drawio"
@@ -25,12 +36,10 @@ packages=(
 	"termius"
 	"wpsoffice"
 	"xmind"
-	"golang"
-	"vim"
 	"lazygit"
 	"tmux"
 )
 
 package_list=$(echo "${packages[@]}" | tr ' ' ' ')
 
-brew install --cask $package_list
+brew install $package_list
