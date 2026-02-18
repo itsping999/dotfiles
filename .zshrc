@@ -1,4 +1,6 @@
 # system configuration.
+autoload -Uz compinit
+compinit
 
 export TERM="xterm-256color"
 
@@ -114,31 +116,8 @@ if command -v vim > /dev/null 2>&1; then
 fi
 
 
-# kubectl configuration
-if command -v kubectl > /dev/null 2>&1; then
-
-	_kubectl_pod_complete() {
-		local cur
-		local -a pods
-		cur=${words[$CURRENT]}
-		pods=($(kubectl get pods --no-headers -o custom-columns=":metadata.name" --all-namespaces 2>/dev/null))
-		compadd -Q -- $pods
-	}
-
-	_kubectl_deployment_complete() {
-		local cur
-		local -a deployments
-		cur=${words[$CURRENT]}
-		deployments=($(kubectl get deployments --no-headers -o custom-columns=":metadata.name" --all-namespaces 2>/dev/null))
-		compadd -Q -- $deployments
-	}
-
-	compdef _kubectl_pod_complete kubectl logs
-	compdef _kubectl_pod_complete kubectl delete
-	compdef _kubectl_pod_complete kubectl describe
-
-	compdef _kubectl_deployment_complete kubectl edit
-	compdef _kubectl_deployment_complete kubectl scale
+if command -v kubectl >/dev/null 2>&1; then
+  source <(kubectl completion zsh)
 fi
 
 # tmux configuration
