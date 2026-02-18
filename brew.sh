@@ -9,6 +9,7 @@ if ! command -v brew > /dev/null 2>&1; then
 fi
 
 packages=(
+	"clash-verge-rev"
 	"git"
 	"vim"
 	"rsync"
@@ -30,7 +31,6 @@ packages=(
 	"openvpn-connect"
 	"drawio"
 	"orbstack"
-	"paper"
 	"sunloginclient"
 	"tencent-lemon"
 	"termius"
@@ -38,6 +38,12 @@ packages=(
 	"xmind"
 	"lazygit"
 	"tmux"
+	"codex"
+	"codex-app"
+	"chatgpt"
+	"proxyman"
+	"postman"
+	"wpsoffice"
 )
 
 package_list=$(echo "${packages[@]}" | tr ' ' ' ')
