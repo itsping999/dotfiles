@@ -9,8 +9,8 @@ if [[ -z ${TMUX} ]]; then
 
 	export GOPROXY="https://goproxy.cn,direct"
 	export GO111MODULE=on
-	export GOPATH="/home/wyuhsin/go"
-	export GOBIN="/home/wyuhsin/go/bin"
+	export GOPATH="$HOME/go"
+	export GOBIN="$HOME/go/bin"
 	export PATH="$GOPATH:$GOBIN:$PATH"
 
 	export ALL_PROXY="socks5://127.0.0.1:7890"
