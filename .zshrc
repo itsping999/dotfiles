@@ -1,7 +1,8 @@
 # system configuration.
+fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 autoload -Uz compinit
-compinit
-
+compinit -u
+setopt prompt_subst
 export TERM="xterm-256color"
 
 if [[ -z ${TMUX} ]]; then
@@ -38,12 +39,6 @@ if [[ -z ${TMUX} ]]; then
 	fi
 fi
 
-setopt PROMPT_SUBST
-autoload -Uz compinit
-if [[ -z ${_COMPINIT_DONE-} ]]; then
-	compinit
-	_COMPINIT_DONE=1
-fi
 
 if command -v git > /dev/null 2>&1; then
 	# function to show git branch and status
@@ -79,31 +74,6 @@ alias vi="vim"
 alias vim="vim"
 alias lg="lazygit"
 
-# git configuration
-if command -v git > /dev/null 2>&1; then
-	# function to complete git branch
-	_git_branch_completion() {
-		local cur
-		local -a branches
-		cur=${words[$CURRENT]}
-		branches=($(git branch --all 2>/dev/null | grep -v '\->' | sed 's/remotes\/origin\///' | sed 's/^[ *]*//'))
-		compadd -Q -- $branches
-	}
-
-	compdef _git_branch_completion g switch
-	compdef _git_branch_completion g checkout
-	compdef _git_branch_completion g merge
-	compdef _git_branch_completion g rebase
-	compdef _git_branch_completion g pull
-	compdef _git_branch_completion g push
-	compdef _git_branch_completion git switch
-	compdef _git_branch_completion git checkout
-	compdef _git_branch_completion git merge
-	compdef _git_branch_completion git rebase
-	compdef _git_branch_completion git pull
-	compdef _git_branch_completion git push
-fi
-
 # fzf configuration
 if command -v fzf > /dev/null 2>&1; then
 	eval "$(fzf --zsh)"
@@ -113,11 +83,6 @@ fi
 # edior configuration
 if command -v vim > /dev/null 2>&1; then
 	export EDITOR=/usr/sbin/nvim
-fi
-
-
-if command -v kubectl >/dev/null 2>&1; then
-  source <(kubectl completion zsh)
 fi
 
 # tmux configuration
