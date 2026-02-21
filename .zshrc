@@ -1,9 +1,23 @@
-# system configuration.
+# system configuration
 fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 autoload -Uz compinit
+autoload -Uz vcs_info
 compinit -u
+
 setopt prompt_subst
 export TERM="xterm-256color"
+
+zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:git:*' formats ':%b'
+zstyle ':vcs_info:git:*' actionformats ':%b|%a'
+zstyle ':vcs_info:git:*' check-for-changes true
+zstyle ':vcs_info:git:*' unstagedstr '*'
+zstyle ':vcs_info:git:*' stagedstr '+'
+
+precmd() { vcs_info }
+
+PROMPT='%F{yellow}[%n@%m %~${vcs_info_msg_0_}]%f
+$ '
 
 if [[ -z ${TMUX} ]]; then
 	cd ~
@@ -14,22 +28,21 @@ if [[ -z ${TMUX} ]]; then
 	export GOBIN="$HOME/go/bin"
 	export PATH="$GOPATH:$GOBIN:$PATH"
 
-	export ALL_PROXY="socks5://127.0.0.1:7890"
-	export HTTP_PROXY="socks5://127.0.0.1:7890"
-	export HTTPS_PROXY="socks5://127.0.0.1:7890"
+	# export ALL_PROXY="socks5://127.0.0.1:7890"
+	# export HTTP_PROXY="socks5://127.0.0.1:7890"
+	# export HTTPS_PROXY="socks5://127.0.0.1:7890"
 	# export LC_ALL="en_US.UTF-8"
 	# export LC_CTYPE="en_US.UTF-8"
 	export LANG="en_US.UTF-8"
 	export LANGUAGE="en_US.UTF-8"
-	export HISTSIZE=1000
-	export SAVEHIST=2000
+	export HISTSIZE=10000
+	export SAVEHIST=20000
 
-	setopt HIST_IGNORE_DUPS
 	setopt HIST_IGNORE_ALL_DUPS
 	setopt HIST_EXPIRE_DUPS_FIRST
 	setopt HIST_SAVE_NO_DUPS
-	setopt HIST_VERIFY
 	setopt APPEND_HISTORY
+	setopt HIST_VERIFY
 	setopt NO_BEEP
 
 	if [[ "$OSTYPE" == "darwin"* && -f /opt/homebrew/bin/brew ]]; then
@@ -39,30 +52,7 @@ if [[ -z ${TMUX} ]]; then
 	fi
 fi
 
-
-if command -v git > /dev/null 2>&1; then
-	# function to show git branch and status
-	_git_ps1() {
-		local git_branch git_status
-		git_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
-		if [[ -n "$git_branch" ]]; then
-			git_status=$(git status --porcelain 2>/dev/null)
-			if [[ -n "$git_status" ]]; then
-				echo ":${git_branch}*"
-			else
-				echo ":${git_branch}"
-			fi
-		fi
-	}
-
-	PROMPT='%F{yellow}[%n@%m %~$(_git_ps1)]%f
-$ '
-else
-	PROMPT='%F{yellow}[%n@%m %~]%f
-$ '
-fi
-
-# alias configuration.
+# alias configuration
 alias ll="ls -l"
 alias l="ls -l"
 alias la="ls -al"
@@ -71,7 +61,6 @@ alias mv="mv -i"
 alias cp="cp -i"
 alias g="git"
 alias vi="vim"
-alias vim="vim"
 alias lg="lazygit"
 
 # fzf configuration
@@ -82,7 +71,8 @@ fi
 
 # edior configuration
 if command -v vim > /dev/null 2>&1; then
-	export EDITOR=/usr/sbin/nvim
+	export EDITOR=vim
+	export VISUAL=vim
 fi
 
 # tmux configuration
