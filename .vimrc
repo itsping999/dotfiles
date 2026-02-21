@@ -42,16 +42,11 @@ inoremap jj <Esc>
 call plug#begin('~/.vim/plugged')
 
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
-
-" Plug 'preservim/nerdtree'
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
-" Plug 'airblade/vim-rooter'
 Plug 'tpope/vim-fugitive'
 Plug 'jiangmiao/auto-pairs'
-
-" copilot
-" Plug 'github/copilot.vim'
+Plug 'voldikss/vim-floaterm'
 
 call plug#end()
 
@@ -84,6 +79,11 @@ nmap <leader>f  <Plug>(coc-format-selected)
 xmap <leader>ca  <Plug>(coc-codeaction-selected)
 nmap <leader>ca  <Plug>(coc-codeaction-selected)<CR>
 nnoremap <leader>e :CocCommand explorer<CR>
+nnoremap <silent> <leader>t :FloatermToggle<CR>
+nnoremap <silent> <leader>tn :FloatermNew<CR>
+nnoremap <silent> <leader>tk :FloatermNext<CR>
+nnoremap <silent> <leader>tj :FloatermPrev<CR>
+tnoremap <Esc> <C-\><C-n>
 
 function! ShowDocumentation()
 	if CocAction('hasProvider', 'hover')
@@ -127,3 +127,6 @@ nnoremap <leader>fk :CocCommand fzf-preview.ProjectGrep<Space>
 
 " nerdtree
 " nnoremap <leader>e :NERDTreeToggle<CR>
+
+" floaterm
+let g:floaterm_autoclose = 1
