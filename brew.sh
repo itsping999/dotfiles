@@ -45,6 +45,7 @@ packages=(
 	"postman"
 	"wpsoffice"
 	"visual-studio-code"
+	"pixpin"
 )
 
 package_list=$(echo "${packages[@]}" | tr ' ' ' ')
