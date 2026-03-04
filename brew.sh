@@ -49,6 +49,7 @@ packages=(
 	"protobuf"
 	"upx"
 	"balenaEtcher"
+	"telnet"
 )
 
 package_list=$(echo "${packages[@]}" | tr ' ' ' ')
