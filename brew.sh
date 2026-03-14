@@ -29,7 +29,6 @@ packages=(
 	"windows-app"
 	"navicat-premium"
 	"openvpn-connect"
-	"drawio"
 	"orbstack"
 	"sunloginclient"
 	"tencent-lemon"
@@ -50,6 +49,7 @@ packages=(
 	"upx"
 	"balenaEtcher"
 	"telnet"
+	"openspec"
 )
 
 package_list=$(echo "${packages[@]}" | tr ' ' ' ')
