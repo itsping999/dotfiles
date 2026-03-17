@@ -1,0 +1,30 @@
+name: Shell Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint-shell:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck shfmt
+
+      - name: Run shellcheck
+        run: |
+          shell_files=(bootstrap.sh brew.sh pacman.sh)
+          shellcheck "${shell_files[@]}"
+
+      - name: Check formatting
+        run: |
+          shell_files=(bootstrap.sh brew.sh pacman.sh)
+          shfmt -d -i 4 -ci "${shell_files[@]}"

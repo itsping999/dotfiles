@@ -1,0 +1,25 @@
+# Homebrew casks
+clash-verge-rev
+apifox
+wechat
+wechatwork
+dingtalk
+google-chrome
+windows-app
+navicat-premium
+openvpn-connect
+orbstack
+sunloginclient
+tencent-lemon
+termius
+wpsoffice
+xmind
+codex
+codex-app
+chatgpt
+proxyman
+postman
+visual-studio-code
+pixpin
+balenaetcher
+openspec

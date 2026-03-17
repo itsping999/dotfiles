@@ -4,6 +4,9 @@ if [ -f "$HOME/.shell_common" ]; then
 	. "$HOME/.shell_common"
 fi
 
+# Skip interactive-only setup for non-interactive shells.
+[[ $- != *i* ]] && return
+
 export HISTSIZE=1000
 export HISTFILESIZE=2000
 export HISTCONTROL=ignoredups:erasedups

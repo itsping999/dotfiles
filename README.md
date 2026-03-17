@@ -24,17 +24,38 @@ macOS (Homebrew):
 bash ./brew.sh
 ```
 
+Package lists are maintained in:
+
+- `packages/brew-formulae.txt`
+- `packages/brew-casks.txt`
+
 Arch Linux (pacman + yay):
 
 ```bash
 bash ./pacman.sh
 ```
 
+Package list is maintained in:
+
+- `packages/pacman-packages.txt`
+
+## CI
+
+GitHub Actions validates shell scripts with:
+
+- `shellcheck`
+- `shfmt -d`
+
+Workflow file:
+
+- `.github/workflows/shell-checks.yml`
+
 ## Shell Notes
 
 - Shared shell config is in `.shell_common` and loaded by both `.bashrc` and `.zshrc`.
 - `AUTO_TMUX=1` enables auto attach/create tmux session (`dev`) in Bash startup.
 - Default editor prefers `nvim`, then falls back to `vim`.
+- `.bashrc` now skips interactive-only prompt/completion setup for non-interactive shells.
 
 ## Structure
 

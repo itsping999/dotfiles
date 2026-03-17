@@ -1,0 +1,17 @@
+# Homebrew formulae
+git
+vim
+rsync
+go
+rust
+python
+lua
+node
+kubectl
+ffmpeg
+ripgrep
+lazygit
+tmux
+protobuf
+upx
+inetutils
