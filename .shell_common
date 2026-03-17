@@ -1,0 +1,48 @@
+# Shared shell settings for Bash and Zsh.
+
+export TERM="xterm-256color"
+
+export GOPROXY="https://goproxy.cn,direct"
+export GO111MODULE=on
+export GOPATH="$HOME/go"
+export GOBIN="$HOME/go/bin"
+
+case ":$PATH:" in
+	*":$GOBIN:"*) ;;
+	*) export PATH="$GOBIN:$PATH" ;;
+esac
+
+case ":$PATH:" in
+	*":$GOPATH:"*) ;;
+	*) export PATH="$GOPATH:$PATH" ;;
+esac
+
+export LANG="en_US.UTF-8"
+export LANGUAGE="en_US.UTF-8"
+
+if [[ "$OSTYPE" == "darwin"* ]] && [[ -x /opt/homebrew/bin/brew ]]; then
+	eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -f /etc/arch-release ]] && [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+	eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+alias ll="ls -l"
+alias l="ls -l"
+alias la="ls -al"
+alias rm="rm -i"
+alias mv="mv -i"
+alias cp="cp -i"
+alias g="git"
+alias lg="lazygit"
+
+if command -v nvim > /dev/null 2>&1; then
+	export EDITOR="nvim"
+	export VISUAL="nvim"
+elif command -v vim > /dev/null 2>&1; then
+	export EDITOR="vim"
+	export VISUAL="vim"
+fi
+
+if [[ -n "${EDITOR:-}" ]]; then
+	alias vi="$EDITOR"
+fi

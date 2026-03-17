@@ -1,26 +1,41 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 if ! command -v brew > /dev/null 2>&1; then
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-	echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
-	eval "$(/opt/homebrew/bin/brew shellenv)"
 
+	if ! grep -Fq 'eval "$(/opt/homebrew/bin/brew shellenv)"' "$HOME/.zshrc"; then
+		echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$HOME/.zshrc"
+	fi
+
+	eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+if ! brew tap | grep -qx "beeftornado/rmtree"; then
 	brew tap beeftornado/rmtree
 fi
 
-packages=(
-	"clash-verge-rev"
+formulae=(
 	"git"
 	"vim"
 	"rsync"
-	"golang"
+	"go"
 	"rust"
 	"python"
 	"lua"
-	"nodejs"
+	"node"
 	"kubectl"
 	"ffmpeg"
 	"ripgrep"
+	"lazygit"
+	"tmux"
+	"protobuf"
+	"upx"
+	"inetutils"
+)
+
+casks=(
+	"clash-verge-rev"
 	"apifox"
 	"wechat"
 	"wechatwork"
@@ -35,23 +50,25 @@ packages=(
 	"termius"
 	"wpsoffice"
 	"xmind"
-	"lazygit"
-	"tmux"
 	"codex"
 	"codex-app"
 	"chatgpt"
 	"proxyman"
 	"postman"
-	"wpsoffice"
 	"visual-studio-code"
 	"pixpin"
-	"protobuf"
-	"upx"
-	"balenaEtcher"
-	"telnet"
+	"balenaetcher"
 	"openspec"
 )
 
-package_list=$(echo "${packages[@]}" | tr ' ' ' ')
+for formula in "${formulae[@]}"; do
+	if ! brew list --versions "$formula" > /dev/null 2>&1; then
+		brew install "$formula"
+	fi
+done
 
-brew install $package_list
+for cask in "${casks[@]}"; do
+	if ! brew list --cask --versions "$cask" > /dev/null 2>&1; then
+		brew install --cask "$cask"
+	fi
+done

@@ -1,35 +1,15 @@
 # system configuration.
 
-export TERM="xterm-256color"
-
-if [[ -z ${TMUX} ]]; then
-	cd ~
-
-	export GOPROXY="https://goproxy.cn,direct"
-	export GO111MODULE=on
-	export GOPATH="$HOME/go"
-	export GOBIN="$HOME/go/bin"
-	export PATH="$GOPATH:$GOBIN:$PATH"
-
-	# export all_proxy="socks5://172.29.248.135:7890"
-	# export ALL_PROXY="socks5://172.29.248.135:7890"
-	# export LC_ALL="en_US.UTF-8"
-	# export LC_CTYPE="en_US.UTF-8"
-	export LANG="en_US.UTF-8"
-	export LANGUAGE="en_US.UTF-8"
-	export HISTSIZE=1000
-	export HISTFILESIZE=2000
-	export HISTCONTROL=ignoredups:erasedups
-
-	shopt -s histappend
-	set bell-style none
-
-	if [[ "$OSTYPE" == "darwin"* && -f /opt/homebrew/bin/brew ]]; then
-		eval "$(/opt/homebrew/bin/brew shellenv)"
-	elif [[ -f /etc/arch-release && -f /home/linuxbrew/.linuxbrew/bin/brew ]]; then
-		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-	fi
+if [ -f "$HOME/.shell_common" ]; then
+	. "$HOME/.shell_common"
 fi
+
+export HISTSIZE=1000
+export HISTFILESIZE=2000
+export HISTCONTROL=ignoredups:erasedups
+
+shopt -s histappend
+set bell-style none
 
 if command -v git > /dev/null 2>&1; then
 	export PS1="\[\e[33m\][\u@\h \w\[\e[33m\]\$(_git_ps1)\[\e[33m\]]\$\[\e[m\] "
@@ -38,17 +18,6 @@ else
 fi
 
 # alias configuration.
-alias ll="ls -l"
-alias l="ls -l"
-alias la="ls -al"
-alias rm="rm -i"
-alias mv="mv -i"
-alias cp="cp -i"
-alias g="git"
-alias vi="vim"
-alias vim="vim"
-alias lg="lazygit"
-
 # git configuration
 if command -v git > /dev/null 2>&1; then
 	# function to show git branch and status
@@ -87,17 +56,10 @@ if command -v git > /dev/null 2>&1; then
 fi
 
 # fzf configuration
-eval "$(fzf --bash)"
-
 if command -v fzf > /dev/null 2>&1; then
+	eval "$(fzf --bash)"
 	export FZF_DEFAULT_OPTS='--bind ctrl-j:down,ctrl-k:up'
 fi
-
-# edior configuration
-if command -v vim > /dev/null 2>&1; then
-	export EDITOR=/usr/sbin/nvim
-fi
-
 
 # kubectl configuration
 if command -v kubectl > /dev/null 2>&1; then
@@ -127,8 +89,7 @@ if command -v kubectl > /dev/null 2>&1; then
 fi
 
 # tmux configuration
-if [[ -z ${TMUX} ]]; then
+if [[ $- == *i* ]] && [[ -z ${TMUX} ]] && [[ "${AUTO_TMUX:-0}" == "1" ]]; then
 	TMUX_SESSION_NAME="dev"
 	tmux attach-session -t ${TMUX_SESSION_NAME} || tmux new-session -t ${TMUX_SESSION_NAME}
 fi
-

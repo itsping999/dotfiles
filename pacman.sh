@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 if ! command -v yay > /dev/null 2>&1; then
-	sudo bash -c 'echo [archlinuxcn] >> /etc/pacman.conf'
-	sudo bash -c 'echo Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/\$arch >> /etc/pacman.conf'
+	if ! grep -q "^\[archlinuxcn\]" /etc/pacman.conf; then
+		sudo bash -c 'echo [archlinuxcn] >> /etc/pacman.conf'
+		sudo bash -c 'echo Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/\$arch >> /etc/pacman.conf'
+	fi
+
 	sudo pacman -Sy
-	sudo pacman -S archlinuxcn-keyring
-	sudo pacman -S yay
+	sudo pacman -S --needed archlinuxcn-keyring yay
 fi
 
 packages=(
@@ -36,11 +39,8 @@ packages=(
 	"inetutils"
 	"podman"
 	"podman-compose"
-	"ripgrep"
 	"ffmpeg"
 	"git-lfs"
 )
 
-package_list=$(echo "${packages[@]}" | tr ' ' ' ')
-
-sudo pacman -Syu --noconfirm $package_list
+sudo pacman -Syu --needed --noconfirm "${packages[@]}"

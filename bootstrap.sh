@@ -1,26 +1,29 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-git pull origin main;
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-function doIt() {
+git -C "$SCRIPT_DIR" pull --ff-only
+
+do_it() {
 	rsync --exclude ".git/" \
 		--exclude "bootstrap.sh" \
 		--exclude "pacman.sh" \
 		--exclude "brew.sh" \
 		--exclude "README.md" \
 		--exclude "LICENSE-MIT.txt" \
-		-avh --no-perms . ~;
-	source ~/.bashrc;
+		-avh --no-perms "$SCRIPT_DIR"/ "$HOME"
+	echo "dotfiles synced to $HOME"
 }
 
-if [ "$1" == "--force" -o "$1" == "-f" ]; then
-	doIt;
+if [[ "${1:-}" == "--force" || "${1:-}" == "-f" ]]; then
+	do_it
 else
-	read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1;
-	echo "";
+	read -r -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1
+	echo ""
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		doIt;
-	fi;
-fi;
+		do_it
+	fi
+fi
 
-unset doIt;
+unset -f do_it
