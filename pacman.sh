@@ -11,8 +11,8 @@ fi
 
 if ! command -v yay > /dev/null 2>&1; then
 	if ! grep -q "^\[archlinuxcn\]" /etc/pacman.conf; then
-		sudo bash -c 'echo [archlinuxcn] >> /etc/pacman.conf'
-		sudo bash -c 'echo Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/\$arch >> /etc/pacman.conf'
+		echo "[archlinuxcn]" | sudo tee -a /etc/pacman.conf > /dev/null
+		echo "Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/\$arch" | sudo tee -a /etc/pacman.conf > /dev/null
 	fi
 
 	sudo pacman -Sy

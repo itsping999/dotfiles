@@ -17,9 +17,10 @@ fi
 
 if ! command -v brew > /dev/null 2>&1; then
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+	brew_shellenv_line="eval \"\$(/opt/homebrew/bin/brew shellenv)\""
 
-	if [[ ! -f "$HOME/.zshrc" ]] || ! grep -Fq 'eval "$(/opt/homebrew/bin/brew shellenv)"' "$HOME/.zshrc"; then
-		echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$HOME/.zshrc"
+	if [[ ! -f "$HOME/.zshrc" ]] || ! grep -Fq "$brew_shellenv_line" "$HOME/.zshrc"; then
+		echo "$brew_shellenv_line" >> "$HOME/.zshrc"
 	fi
 fi
 
