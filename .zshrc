@@ -12,7 +12,7 @@ fi
 
 zstyle ':vcs_info:*' enable git
 zstyle ':vcs_info:git:*' formats ':%b%c%u'
-zstyle ':vcs_info:git:*' actionformats ':%b|%a%c%u'
+zstyle ':vcs_info:git:*' actionformats ':%b%c%u'
 zstyle ':vcs_info:git:*' check-for-changes true
 zstyle ':vcs_info:git:*' unstagedstr '*'
 zstyle ':vcs_info:git:*' stagedstr '+'
