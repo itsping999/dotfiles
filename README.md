@@ -1,11 +1,11 @@
 # dotfiles
 
-Personal shell/editor/tooling configuration for macOS and Arch Linux.
+Lean personal dotfiles for macOS and Arch Linux.
 
 ## Quick Start
 
 ```bash
-git clone <your-repo-url> ~/dotfiles
+git clone git@github.com:itsping999/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 bash ./bootstrap.sh
 ```
@@ -16,57 +16,43 @@ Use `--force` to skip confirmation:
 bash ./bootstrap.sh --force
 ```
 
-## Package Setup
+## Package Install
 
-macOS (Homebrew):
+macOS:
 
 ```bash
 bash ./brew.sh
 ```
 
-Package lists are maintained in:
+- Auto-installs Homebrew if missing.
+- Installs formulae and casks defined directly in `brew.sh`.
 
-- `packages/brew-formulae.txt`
-- `packages/brew-casks.txt`
-
-Arch Linux (pacman + yay):
+Arch Linux:
 
 ```bash
 bash ./pacman.sh
 ```
 
-Package list is maintained in:
+- Requires `yay` to be preinstalled.
+- Installs packages defined directly in `pacman.sh`.
 
-- `packages/pacman-packages.txt`
+## Config Files
+
+- `.zshrc`: shell config
+- `.vimrc`: Vim config
+- `.tmux.conf`: tmux config
+- `bootstrap.sh`: syncs dotfiles into `$HOME`
+- `brew.sh`: macOS package bootstrap
+- `pacman.sh`: Arch package bootstrap
+
+## Notes
+
+- Shell configuration is single-file (`.zshrc`), no cross-file sourcing.
+- Default editor is `vim`.
 
 ## CI
 
-GitHub Actions validates shell scripts with:
+Shell scripts are checked in GitHub Actions with:
 
 - `shellcheck`
 - `shfmt -d`
-
-Workflow file:
-
-- `.github/workflows/shell-checks.yml`
-
-## Shell Notes
-
-- Shared shell config is in `.shell_common` and loaded by both `.bashrc` and `.zshrc`.
-- `AUTO_TMUX=1` enables auto attach/create tmux session (`dev`) in Bash startup.
-- Default editor prefers `nvim`, then falls back to `vim`.
-- `.bashrc` now skips interactive-only prompt/completion setup for non-interactive shells.
-
-## Structure
-
-- `.zshrc` / `.bashrc`: shell-specific behavior
-- `.shell_common`: shared env/aliases/editor settings
-- `.vimrc`: Vim config
-- `.config/nvim`: Neovim Lua config
-- `.tmux.conf`: tmux and tpm plugins
-- `bootstrap.sh`: sync dotfiles to `$HOME`
-- `brew.sh` / `pacman.sh`: package bootstrap scripts
-
-## Safety
-
-`bootstrap.sh` uses `rsync` and will overwrite matching files in your home directory after confirmation.

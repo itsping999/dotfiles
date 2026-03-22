@@ -1,27 +1,54 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-FORMULAE_FILE="$SCRIPT_DIR/packages/brew-formulae.txt"
-CASKS_FILE="$SCRIPT_DIR/packages/brew-casks.txt"
+formulae=(
+    git
+    vim
+    rsync
+    go
+    rust
+    python
+    lua
+    node
+    kubectl
+    ffmpeg
+    ripgrep
+    lazygit
+    tmux
+    protobuf
+    upx
+    inetutils
+)
 
-if [[ ! -f "$FORMULAE_FILE" ]]; then
-    echo "missing package list: $FORMULAE_FILE" >&2
-    exit 1
-fi
-
-if [[ ! -f "$CASKS_FILE" ]]; then
-    echo "missing package list: $CASKS_FILE" >&2
-    exit 1
-fi
+casks=(
+    clash-verge-rev
+    apifox
+    wechat
+    wechatwork
+    dingtalk
+    google-chrome
+    windows-app
+    navicat-premium
+    openvpn-connect
+    orbstack
+    sunloginclient
+    tencent-lemon
+    termius
+    wpsoffice
+    xmind
+    codex
+    codex-app
+    chatgpt
+    proxyman
+    postman
+    visual-studio-code
+    pixpin
+    balenaetcher
+    openspec
+)
 
 if ! command -v brew >/dev/null 2>&1; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    brew_shellenv_line="eval \"\$(/opt/homebrew/bin/brew shellenv)\""
-
-    if [[ ! -f "$HOME/.zshrc" ]] || ! grep -Fq "$brew_shellenv_line" "$HOME/.zshrc"; then
-        echo "$brew_shellenv_line" >>"$HOME/.zshrc"
-    fi
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
 BREW_BIN="$(command -v brew || true)"
@@ -38,20 +65,14 @@ fi
 
 eval "$("$BREW_BIN" shellenv)"
 
-if ! brew tap | grep -qx "beeftornado/rmtree"; then
-    brew tap beeftornado/rmtree
-fi
-
-while IFS= read -r formula || [[ -n "$formula" ]]; do
-    [[ -z "$formula" || "${formula:0:1}" == "#" ]] && continue
+for formula in "${formulae[@]}"; do
     if ! brew list --versions "$formula" >/dev/null 2>&1; then
         brew install "$formula"
     fi
-done <"$FORMULAE_FILE"
+done
 
-while IFS= read -r cask || [[ -n "$cask" ]]; do
-    [[ -z "$cask" || "${cask:0:1}" == "#" ]] && continue
+for cask in "${casks[@]}"; do
     if ! brew list --cask --versions "$cask" >/dev/null 2>&1; then
         brew install --cask "$cask"
     fi
-done <"$CASKS_FILE"
+done
