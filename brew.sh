@@ -31,7 +31,7 @@ casks=(
     navicat-premium
     openvpn-connect
     orbstack
-    sunloginclient
+    awesun
     tencent-lemon
     termius
     wpsoffice
@@ -44,7 +44,6 @@ casks=(
     visual-studio-code
     pixpin
     balenaetcher
-    openspec
 )
 
 if ! command -v brew >/dev/null 2>&1; then
