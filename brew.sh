@@ -30,13 +30,11 @@ casks=(
     windows-app
     navicat-premium
     openvpn-connect
-    orbstack
     awesun
     tencent-lemon
     termius
     wpsoffice
     xmind
-    codex
     codex-app
     chatgpt
     proxyman
@@ -44,6 +42,7 @@ casks=(
     visual-studio-code
     pixpin
     balenaetcher
+    orbstack
 )
 
 if ! command -v brew >/dev/null 2>&1; then

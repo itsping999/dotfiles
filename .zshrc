@@ -1,6 +1,5 @@
 fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 autoload -Uz compinit
-autoload -Uz vcs_info
 compinit -u
 
 setopt prompt_subst
@@ -49,16 +48,22 @@ if [[ -n "${EDITOR:-}" ]]; then
 	alias vi="$EDITOR"
 fi
 
-zstyle ':vcs_info:*' enable git
-zstyle ':vcs_info:git:*' formats ':%b%c%u'
-zstyle ':vcs_info:git:*' actionformats ':%b%c%u'
-zstyle ':vcs_info:git:*' check-for-changes true
-zstyle ':vcs_info:git:*' unstagedstr '*'
-zstyle ':vcs_info:git:*' stagedstr '+'
+git_branch() {
+  git rev-parse --abbrev-ref HEAD 2>/dev/null
+}
 
-precmd() { vcs_info }
+git_marks() {
+  local s
+  s=$(git status --porcelain 2>/dev/null) || return
+  [[ "$s" == *[MADRCU]* ]] && printf '+'
+  [[ "$s" == *'??'* || "$s" == *' M'* || "$s" == *' D'* ]] && printf '*'
+}
 
-PROMPT='%F{yellow}[%n@%m %~${vcs_info_msg_0_}]%f
+setopt PROMPT_SUBST
+PROMPT='%F{yellow}[%n@%m %~$( \
+  b=$(git_branch); \
+  [[ -n "$b" ]] && printf ":%s%s" "$b" "$(git_marks)" \
+)]%f
 $ '
 
 export HISTSIZE=10000
