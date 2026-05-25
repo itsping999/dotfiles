@@ -56,6 +56,8 @@ bash ./pacman.sh
 - `.vimrc`: Vim config
 - `.tmux.conf`: tmux config
 - `.gitconfig`: Git defaults, identity, and URL rewrites
+- `.gitmessage`: Angular/Conventional Commits template
+- `.config/git/ignore`: global Git ignore rules
 - `Brewfile`: macOS Homebrew package manifest
 - `bootstrap.sh`: syncs dotfiles into `$HOME`
 - `brew.sh`: macOS package bootstrap

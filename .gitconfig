@@ -1,6 +1,6 @@
 [core]
     editor = vim
-    excludesfile = ~/.gitignore
+    excludesfile = ~/.config/git/ignore
     attributesfile = ~/.gitattributes
     autocrlf = input
     filemode = false
@@ -32,6 +32,7 @@
     followTags = true
 
 [commit]
+    template = ~/.gitmessage
     # gpgSign = true
 
 [gc]
