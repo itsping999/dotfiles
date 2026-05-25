@@ -16,6 +16,18 @@ Use `--force` to skip confirmation:
 bash ./bootstrap.sh --force
 ```
 
+Preview changes without writing files:
+
+```bash
+bash ./bootstrap.sh --dry-run
+```
+
+Back up overwritten files:
+
+```bash
+bash ./bootstrap.sh --force --backup
+```
+
 ## Package Install
 
 macOS:
@@ -25,7 +37,9 @@ bash ./brew.sh
 ```
 
 - Auto-installs Homebrew if missing.
-- Installs formulae and casks defined directly in `brew.sh`.
+- Installs missing formulae and casks defined in `Brewfile`.
+- Use `--upgrade` to upgrade packages that are already installed.
+- Use `--dry-run` to preview package actions.
 
 Arch Linux:
 
@@ -41,13 +55,16 @@ bash ./pacman.sh
 - `.zshrc`: shell config
 - `.vimrc`: Vim config
 - `.tmux.conf`: tmux config
+- `.gitconfig`: Git defaults, identity, and URL rewrites
+- `Brewfile`: macOS Homebrew package manifest
 - `bootstrap.sh`: syncs dotfiles into `$HOME`
 - `brew.sh`: macOS package bootstrap
 - `pacman.sh`: Arch package bootstrap
 
 ## Notes
 
-- Shell configuration is single-file (`.zshrc`), no cross-file sourcing.
+- `bootstrap.sh` excludes package manifests/scripts, README, Git metadata, CI metadata, and `.DS_Store`.
+- Shell `path`/`fpath` entries are de-duplicated by zsh.
 - Default editor is `vim`.
 
 ## CI
@@ -56,3 +73,4 @@ Shell scripts are checked in GitHub Actions with:
 
 - `shellcheck`
 - `shfmt -d`
+- `bash -n`

@@ -24,6 +24,11 @@ jobs:
           shell_files=(bootstrap.sh brew.sh pacman.sh)
           shellcheck "${shell_files[@]}"
 
+      - name: Check shell syntax
+        run: |
+          shell_files=(bootstrap.sh brew.sh pacman.sh)
+          bash -n "${shell_files[@]}"
+
       - name: Check formatting
         run: |
           shell_files=(bootstrap.sh brew.sh pacman.sh)

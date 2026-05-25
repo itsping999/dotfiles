@@ -1,58 +1,50 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-formulae=(
-    git
-    git-lfs
-    vim
-    rsync
-    go
-    rust
-    python
-    lua
-    node
-    kubectl
-    ffmpeg
-    ripgrep
-    lazygit
-    tmux
-    protobuf
-    upx
-    inetutils
-    sshpass
-    telnet
-)
+BREWFILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/Brewfile"
+DRY_RUN=false
+UPGRADE=false
 
-casks=(
-    clash-verge-rev
-    apifox
-    wechat
-    wechatwork
-    dingtalk
-    google-chrome
-    windows-app
-    navicat-premium
-    openvpn-connect
-    awesun
-    tencent-lemon
-    termius
-    wpsoffice
-    xmind
-    codex-app
-    chatgpt
-    cc-switch
-    proxyman
-    postman
-    visual-studio-code
-    pixpin
-    balenaetcher
-    orbstack
-    sublime-text
-    uuremote
-    drawio
-)
+usage() {
+    cat <<'EOF'
+Usage: brew.sh [--upgrade] [--dry-run]
+
+Install Homebrew packages declared in Brewfile.
+
+Options:
+  -u, --upgrade   Upgrade already installed packages
+  -n, --dry-run   Show actions without installing or upgrading packages
+  -h, --help      Show this help
+EOF
+}
+
+while (($#)); do
+    case "$1" in
+        -u | --upgrade)
+            UPGRADE=true
+            ;;
+        -n | --dry-run)
+            DRY_RUN=true
+            ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "unknown option: $1" >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
 
 if ! command -v brew >/dev/null 2>&1; then
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "would install Homebrew"
+        exit 0
+    fi
+
     NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
@@ -69,20 +61,22 @@ if [[ -z "$BREW_BIN" ]]; then
 fi
 
 eval "$("$BREW_BIN" shellenv)"
-"$BREW_BIN" update
 
-for formula in "${formulae[@]}"; do
-    if "$BREW_BIN" list --versions "$formula" >/dev/null 2>&1; then
-        "$BREW_BIN" upgrade "$formula" || true
+if [[ "$DRY_RUN" == true ]]; then
+    echo "would run: brew update"
+    if [[ "$UPGRADE" == true ]]; then
+        "$BREW_BIN" bundle check --file "$BREWFILE" || true
+        echo "would run: brew bundle install --upgrade --file $BREWFILE"
     else
-        "$BREW_BIN" install "$formula"
+        "$BREW_BIN" bundle check --file "$BREWFILE" || true
+        echo "would run: brew bundle install --no-upgrade --file $BREWFILE"
     fi
-done
+else
+    "$BREW_BIN" update
 
-for cask in "${casks[@]}"; do
-    if "$BREW_BIN" list --cask --versions "$cask" >/dev/null 2>&1; then
-        "$BREW_BIN" upgrade --cask "$cask" || true
+    if [[ "$UPGRADE" == true ]]; then
+        "$BREW_BIN" bundle install --upgrade --file "$BREWFILE"
     else
-        "$BREW_BIN" install --cask "$cask"
+        "$BREW_BIN" bundle install --no-upgrade --file "$BREWFILE"
     fi
-done
+fi

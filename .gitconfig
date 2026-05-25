@@ -52,3 +52,9 @@
 
 [help]
     color = auto
+
+[user]
+    name = ping999
+
+[url "git@gitlab.haiwell.com:"]
+    insteadof = http://gitlab.haiwell.com/
