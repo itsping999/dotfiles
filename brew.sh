@@ -3,6 +3,7 @@ set -euo pipefail
 
 formulae=(
     git
+    git-lfs
     vim
     rsync
     go
@@ -18,6 +19,8 @@ formulae=(
     protobuf
     upx
     inetutils
+    sshpass
+    telnet
 )
 
 casks=(
@@ -37,12 +40,16 @@ casks=(
     xmind
     codex-app
     chatgpt
+    cc-switch
     proxyman
     postman
     visual-studio-code
     pixpin
     balenaetcher
     orbstack
+    sublime-text
+    uuremote
+    drawio
 )
 
 if ! command -v brew >/dev/null 2>&1; then
@@ -62,15 +69,20 @@ if [[ -z "$BREW_BIN" ]]; then
 fi
 
 eval "$("$BREW_BIN" shellenv)"
+"$BREW_BIN" update
 
 for formula in "${formulae[@]}"; do
-    if ! brew list --versions "$formula" >/dev/null 2>&1; then
-        brew install "$formula"
+    if "$BREW_BIN" list --versions "$formula" >/dev/null 2>&1; then
+        "$BREW_BIN" upgrade "$formula" || true
+    else
+        "$BREW_BIN" install "$formula"
     fi
 done
 
 for cask in "${casks[@]}"; do
-    if ! brew list --cask --versions "$cask" >/dev/null 2>&1; then
-        brew install --cask "$cask"
+    if "$BREW_BIN" list --cask --versions "$cask" >/dev/null 2>&1; then
+        "$BREW_BIN" upgrade --cask "$cask" || true
+    else
+        "$BREW_BIN" install --cask "$cask"
     fi
 done
