@@ -58,14 +58,16 @@ bash ./pacman.sh
 - `.gitconfig`: Git defaults, identity, and URL rewrites
 - `.gitmessage`: Angular/Conventional Commits template
 - `.config/git/ignore`: global Git ignore rules
+- `.agents/skills`: tracked agent skills
 - `Brewfile`: macOS Homebrew package manifest
 - `bootstrap.sh`: syncs dotfiles into `$HOME`
+- `skills.sh`: syncs tracked agent skills into `~/.agents/skills`
 - `brew.sh`: macOS package bootstrap
 - `pacman.sh`: Arch package bootstrap
 
 ## Notes
 
-- `bootstrap.sh` excludes package manifests/scripts, README, Git metadata, CI metadata, and `.DS_Store`.
+- `bootstrap.sh` excludes package manifests/scripts, README, Git metadata, CI metadata, tracked skills, and `.DS_Store`.
 - Shell `path`/`fpath` entries are de-duplicated by zsh.
 - Default editor is `vim`.
 

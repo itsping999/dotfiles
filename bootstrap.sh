@@ -24,7 +24,9 @@ do_it() {
     local -a rsync_args=(
         --exclude ".git/"
         --exclude ".github/"
+        --exclude ".agents/"
         --exclude "bootstrap.sh" \
+        --exclude "skills.sh" \
         --exclude "pacman.sh" \
         --exclude "brew.sh" \
         --exclude "Brewfile" \
