@@ -64,7 +64,8 @@ git_marks() {
 }
 
 setopt PROMPT_SUBST
-PROMPT='%F{yellow}[%n@%m %~$( \
+PROMPT_HOSTNAME="$(scutil --get LocalHostName 2>/dev/null || hostname -s)"
+PROMPT='%F{yellow}[%n@${PROMPT_HOSTNAME} %~$( \
   b=$(git_branch); \
   [[ -n "$b" ]] && printf ":%s%s" "$b" "$(git_marks)" \
 )]%f

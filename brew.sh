@@ -5,8 +5,13 @@ BREWFILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/Brewfile"
 DRY_RUN=false
 UPGRADE=false
 
+# Extra taps required by some casks.
+taps=(
+    farion1231/ccswitch
+)
+
 usage() {
-    cat <<'EOF'
+    cat <<'USAGE'
 Usage: brew.sh [--upgrade] [--dry-run]
 
 Install Homebrew packages declared in Brewfile.
@@ -15,7 +20,7 @@ Options:
   -u, --upgrade   Upgrade already installed packages
   -n, --dry-run   Show actions without installing or upgrading packages
   -h, --help      Show this help
-EOF
+USAGE
 }
 
 while (($#)); do
@@ -63,15 +68,26 @@ fi
 eval "$("$BREW_BIN" shellenv)"
 
 if [[ "$DRY_RUN" == true ]]; then
+    for tap in "${taps[@]}"; do
+        if ! "$BREW_BIN" tap | grep -qx "$tap"; then
+            echo "would run: brew tap $tap"
+        fi
+    done
+
     echo "would run: brew update"
+    "$BREW_BIN" bundle check --file "$BREWFILE" || true
     if [[ "$UPGRADE" == true ]]; then
-        "$BREW_BIN" bundle check --file "$BREWFILE" || true
         echo "would run: brew bundle install --upgrade --file $BREWFILE"
     else
-        "$BREW_BIN" bundle check --file "$BREWFILE" || true
         echo "would run: brew bundle install --no-upgrade --file $BREWFILE"
     fi
 else
+    for tap in "${taps[@]}"; do
+        if ! "$BREW_BIN" tap | grep -qx "$tap"; then
+            "$BREW_BIN" tap "$tap"
+        fi
+    done
+
     "$BREW_BIN" update
 
     if [[ "$UPGRADE" == true ]]; then
