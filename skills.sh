@@ -5,15 +5,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_DIR="$SCRIPT_DIR/.agents/skills"
 TARGET_DIR="$HOME/.agents/skills"
 DRY_RUN=false
+DELETE=false
 
 usage() {
     cat <<'EOF'
-Usage: skills.sh [--dry-run]
+Usage: skills.sh [--dry-run] [--delete]
 
 Sync tracked agent skills into ~/.agents/skills.
+By default, files that exist only in ~/.agents/skills are preserved.
 
 Options:
   -n, --dry-run   Show files that would be synced without changing anything
+  --delete        Delete files in ~/.agents/skills that are not tracked here
   -h, --help      Show this help
 EOF
 }
@@ -22,6 +25,9 @@ while (($#)); do
     case "$1" in
         -n | --dry-run)
             DRY_RUN=true
+            ;;
+        --delete)
+            DELETE=true
             ;;
         -h | --help)
             usage
@@ -45,9 +51,12 @@ mkdir -p "$TARGET_DIR"
 
 rsync_args=(
     -avh
-    --delete
     --exclude ".DS_Store"
 )
+
+if [[ "$DELETE" == true ]]; then
+    rsync_args+=(--delete)
+fi
 
 if [[ "$DRY_RUN" == true ]]; then
     rsync_args+=(--dry-run)
@@ -58,5 +67,9 @@ rsync "${rsync_args[@]}" "$SOURCE_DIR"/ "$TARGET_DIR"/
 if [[ "$DRY_RUN" == true ]]; then
     echo "dry run complete; no skills changed"
 else
-    echo "skills synced to $TARGET_DIR"
+    if [[ "$DELETE" == true ]]; then
+        echo "skills synced to $TARGET_DIR with deletion enabled"
+    else
+        echo "skills synced to $TARGET_DIR; local-only skills preserved"
+    fi
 fi

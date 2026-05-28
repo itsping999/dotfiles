@@ -61,13 +61,14 @@ bash ./pacman.sh
 - `.agents/skills`: tracked agent skills
 - `Brewfile`: macOS Homebrew package manifest
 - `bootstrap.sh`: syncs dotfiles into `$HOME`
-- `skills.sh`: syncs tracked agent skills into `~/.agents/skills`
+- `skills.sh`: syncs tracked agent skills into `~/.agents/skills`; preserves local-only skills by default
 - `brew.sh`: macOS package bootstrap
 - `pacman.sh`: Arch package bootstrap
 
 ## Notes
 
 - `bootstrap.sh` excludes package manifests/scripts, README, Git metadata, CI metadata, tracked skills, and `.DS_Store`.
+- `skills.sh --delete` makes skill sync mirror the tracked directory by deleting local-only files.
 - Shell `path`/`fpath` entries are de-duplicated by zsh.
 - Default editor is `vim`.
 
