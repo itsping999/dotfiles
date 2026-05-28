@@ -25,15 +25,15 @@ do_it() {
         --exclude ".git/"
         --exclude ".github/"
         --exclude ".agents/"
-        --exclude "bootstrap.sh" \
-        --exclude "skills.sh" \
-        --exclude "pacman.sh" \
-        --exclude "brew.sh" \
-        --exclude "Brewfile" \
-        --exclude "README.md" \
-        --exclude "LICENSE-MIT.txt" \
-        --exclude ".DS_Store" \
-        -avh \
+        --exclude "bootstrap.sh"
+        --exclude "skills.sh"
+        --exclude "pacman.sh"
+        --exclude "brew.sh"
+        --exclude "Brewfile"
+        --exclude "README.md"
+        --exclude "LICENSE-MIT.txt"
+        --exclude ".DS_Store"
+        -avh
         --no-perms
     )
 
