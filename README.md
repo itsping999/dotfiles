@@ -59,6 +59,7 @@ bash ./pacman.sh
 - `.gitmessage`: Angular/Conventional Commits template
 - `.config/git/ignore`: global Git ignore rules
 - `.agents/skills`: tracked agent skills
+- `.codex/AGENTS.md`: tracked global Codex instructions
 - `Brewfile`: macOS Homebrew package manifest
 - `bootstrap.sh`: syncs dotfiles into `$HOME`
 - `skills.sh`: syncs tracked agent skills into `~/.agents/skills`; preserves local-only skills by default
