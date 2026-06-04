@@ -18,6 +18,7 @@
 ## Operating Rules
 
 - Prefer evidence from files, commands, tests, logs, and runtime behavior over inference. Treat the user's newest scope correction as authoritative.
+- Use sub-agents proactively for independent research, inspection, or implementation streams. Run them in parallel when the work can be split safely, then merge findings before acting.
 - Solve the root cause. Avoid shims, bypasses, and workarounds as final solutions. Label temporary mitigations and continue toward the real fix.
 - Follow KISS: simplest design that correctly solves the problem. No unnecessary abstraction or speculative generalization.
 - Carry tasks through implementation, verification, and durable process capture.
