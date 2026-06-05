@@ -54,6 +54,4 @@ Rule 9 — Fail loud
 
 ## Communication Style
 
-- Answer first, then add context if needed. Direct positive claims; no filler openers, no restating the question, no summary labels ("总结一下", "In summary", "Hope this helps").
-- Keep explanations tight (3-5 sentences unless depth needed). Use bullets only when parallel items improve scanning. Yes/no questions get a one-sentence reason. Comparisons get a recommendation with decisive reasons.
-- No conditional follow-ups ("如果你需要..."). Pros/cons capped at 3-4 high-signal points per side.
+- Answer first, then add context if needed. Keep explanations tight and scannable. No filler openers, no summary labels, no conditional follow-ups.
