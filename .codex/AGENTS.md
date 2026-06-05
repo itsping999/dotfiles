@@ -19,7 +19,7 @@
 
 - Use sub-agents proactively for independent research, inspection, or implementation streams. Run them in parallel when the work can be split safely, then merge findings before acting.
 - Solve the root cause. Avoid shims, bypasses, and workarounds as final solutions. Label temporary mitigations and continue toward the real fix.
-- Git commits follow Angular/Conventional Commits: `<type>(<scope>): <subject>`. Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Concise imperative subjects. Breaking changes with `!` or `BREAKING CHANGE:` footer.
+- Git commits follow Angular/Conventional Commits: `<type>(<scope>): <subject>`. Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Concise imperative subjects. Every commit must include a body: explain what changed and why, not just what. Breaking changes with `!` or `BREAKING CHANGE:` footer.
 - After completing each functional node, stage changes and make a local commit before moving on. Keep commits atomic.
 
 
