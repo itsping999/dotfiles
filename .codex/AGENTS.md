@@ -2,9 +2,8 @@
 
 ## Memory & Learning
 
-- Before non-trivial tasks, check `~/.codex/memories/`. Persist reusable knowledge via ad-hoc notes (`~/.codex/memories/extensions/ad_hoc/notes/`) or memory consolidation. Never persist one-off runtime details, transient errors, unverified guesses, or sensitive values (keys, tokens, passwords, credentials). Redact sensitive sources; record only that they contain sensitive config. Date drift-prone facts.
-- After completed work, classify outcomes: reusable facts → memory; repeatable procedures → skill; one-off states → discard. Only promote evidence-backed learning.
-- Skills define trigger, prerequisites, inputs, workflow, verification, output, and safety. Save to `~/.agents/skills/` (shared) or repo-local dir when workflow is scoped there.
+- Before non-trivial tasks, check `~/.codex/memories/`. Record only evidence-backed, reusable knowledge; discard one-off states, transient errors, guesses, and secrets. Redact sensitive sources and date drift-prone facts.
+- After completed work, classify outcomes: facts → memory/ad-hoc notes, repeatable procedures → skills, one-off details → discard. Skills must define trigger, inputs, workflow, verification, output, and safety; save shared skills to `~/.agents/skills/`.
 
 ## File & Sync Rules
 
