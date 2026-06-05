@@ -20,6 +20,12 @@ Produce concise, evidence-backed instructions that help agents work inside a spe
 
 Prefer a short root `AGENTS.md` plus nested `AGENTS.md` files for subprojects with different stacks or rules.
 
+## Mandatory Code Understanding
+
+Before creating or updating any project `AGENTS.md`, inspect and understand the actual project code. Reading only `README`, docs, existing `AGENTS.md`, package manifests, or CI files is insufficient.
+
+At minimum, examine representative source files for the main runtime paths, entrypoints, module boundaries, tests, and any subsystem that the generated instructions will mention. Trace how important concepts are wired through code before describing them. If the repository is too large to inspect exhaustively, sample each major subsystem and state the coverage used.
+
 ## Source Order
 
 Inspect repository evidence before writing:
@@ -28,7 +34,7 @@ Inspect repository evidence before writing:
 2. `README*`, `CONTRIBUTING*`, docs indexes, runbooks, and architecture notes.
 3. Manifests and lock files: `package.json`, `pnpm-lock.yaml`, `go.mod`, `Cargo.toml`, `pyproject.toml`, `requirements*.txt`, `pom.xml`, `build.gradle*`, and similar.
 4. `Makefile`, task runners, shell scripts, Docker/Compose files, deployment scripts, and CI workflows.
-5. Source layout, test layout, generated-code markers, schema/migration directories, and configuration boundaries.
+5. Real source files: entrypoints, core modules, immediate callers, tests, generated-code markers, schema/migration directories, and configuration boundaries.
 6. Registry files, plugin/integration declarations, manifests, code generators, template directories, and files with managed-section markers.
 7. Issue, branch, PR, review, release, and contribution docs when the user wants workflow guidance.
 
@@ -114,7 +120,7 @@ Omit sections that do not add useful repo-specific information.
 ## Creation Workflow
 
 1. State assumptions and success criteria briefly.
-2. Inspect source files listed in Source Order.
+2. Inspect source files listed in Source Order, including real code paths and representative tests before drafting.
 3. Identify the repo-specific rules future agents would otherwise miss: source-of-truth files, standard flows, variants, special cases, and pitfalls.
 4. Draft the shortest useful root `AGENTS.md`.
 5. Add nested `AGENTS.md` files only when a subtree has distinct commands, stack, generated outputs, or ownership boundaries.
@@ -127,6 +133,7 @@ Omit sections that do not add useful repo-specific information.
 
 - The file answers "what should an agent do differently in this repo?"
 - Commands are copied from repo evidence or explicitly marked as inferred.
+- Claimed architecture, workflows, boundaries, and pitfalls are backed by inspected source code, not docs alone.
 - Referenced paths exist or are intentionally future-facing and labeled.
 - The file is short enough to be read during every task.
 - It avoids duplicating README, CI, formatter, and linter details.
