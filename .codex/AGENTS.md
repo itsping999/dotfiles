@@ -47,9 +47,12 @@ Rule 6 — Read before you write
 Before adding code, read exports, immediate callers, shared utilities. "Looks orthogonal" is dangerous. If unsure why code is structured a way, ask.
 
 Rule 7 — Tests verify intent, not just behavior
-Tests must encode WHY behavior matters, not just WHAT it does. A test that can't fail when business logic changes is wrong.
+Tests must encode WHY behavior matters, not just WHAT it does. A test that can't fail when business logic changes is wrong. Tests written after implementation tend to just confirm the code works as-is, not that it meets requirements.
 
-Rule 8 — Fail loud
+Rule 8 — Test First
+Write the test case before implementing the feature. The test defines the expected behavior and success criteria. Then write the minimum code to make it pass.
+
+Rule 9 — Fail loud
 "Completed" is wrong if anything was skipped silently. "Tests pass" is wrong if any were skipped. Default to surfacing uncertainty, not hiding it. If approaching resource limits or encountering errors, surface the breach. Do not silently overrun.
 
 ## Communication Style
