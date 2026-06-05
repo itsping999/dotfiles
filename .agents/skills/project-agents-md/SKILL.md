@@ -15,6 +15,8 @@ Produce concise, evidence-backed instructions that help agents work inside a spe
 - Which commands verify tests, lint, format, typecheck, build, or smoke behavior.
 - Which project conventions are not already obvious from config files.
 - Which workflows, boundaries, and completion criteria matter for this repo.
+- Which source files are the single source of truth for registries, schemas, templates, generated sections, or metadata.
+- Which repeatable contribution flows deserve step-by-step instructions because missing a step commonly breaks the repo.
 
 Prefer a short root `AGENTS.md` plus nested `AGENTS.md` files for subprojects with different stacks or rules.
 
@@ -27,8 +29,25 @@ Inspect repository evidence before writing:
 3. Manifests and lock files: `package.json`, `pnpm-lock.yaml`, `go.mod`, `Cargo.toml`, `pyproject.toml`, `requirements*.txt`, `pom.xml`, `build.gradle*`, and similar.
 4. `Makefile`, task runners, shell scripts, Docker/Compose files, deployment scripts, and CI workflows.
 5. Source layout, test layout, generated-code markers, schema/migration directories, and configuration boundaries.
+6. Registry files, plugin/integration declarations, manifests, code generators, template directories, and files with managed-section markers.
+7. Issue, branch, PR, review, release, and contribution docs when the user wants workflow guidance.
 
 Use `rg` and `rg --files` for discovery. Verify command names and referenced paths from files, not memory.
+
+## What To Extract
+
+Look for high-signal patterns like these:
+
+- **Project purpose**: one short paragraph that orients future agents without replacing the README.
+- **Architecture map**: a compact tree or bullets for the modules agents must understand before editing.
+- **Single source of truth**: registries, manifests, schema files, config files, generated-section delimiters, and metadata owners.
+- **Standard contribution flows**: concrete steps for adding integrations, commands, plugins, routes, migrations, generated assets, or tests.
+- **Required fields and formats**: tables for class attributes, config keys, frontmatter fields, placeholder syntax, or file naming rules.
+- **Variant matrix**: when different languages, package managers, output formats, or agent/tool integrations follow different rules.
+- **Special cases**: components that intentionally override the standard path and need extra setup, teardown, merge, or post-processing.
+- **Pitfalls**: short bullets for common mistakes that are easy for agents to make and costly to debug.
+- **Human workflow**: branch names, PR review response rules, release gates, or comment etiquette only when the repo documents them.
+- **Maintenance trigger**: a note saying the `AGENTS.md` should be updated when the documented workflow or integration changes.
 
 ## Writing Rules
 
@@ -41,14 +60,25 @@ Use `rg` and `rg --files` for discovery. Verify command names and referenced pat
 - If a command is expensive, flaky, environment-dependent, or requires credentials, say that plainly.
 - Remove obsolete commands or paths only after verifying they are obsolete.
 - Preserve user-authored intent unless it conflicts with current repository evidence.
+- Prefer decision tables over prose when agents must choose between base classes, formats, commands, or workflows.
+- Put examples next to rules when a wrong shape is plausible.
+- Name the file that owns each rule when future agents must edit that file too.
 
 ## Recommended Shape
 
 ```markdown
 # Agent Instructions
 
+## Project Purpose
+- ...
+
 ## Project Map
 - `path/` - what agents need to know.
+
+## Source Of Truth
+| Concern | File/Directory | Notes |
+| --- | --- | --- |
+| ... | `...` | ... |
 
 ## Commands
 | Task | Command |
@@ -57,13 +87,22 @@ Use `rg` and `rg --files` for discovery. Verify command names and referenced pat
 | Lint | `...` |
 | Build | `...` |
 
-## Workflow
-- ...
+## Common Workflows
+### Add ...
+1. ...
 
 ## Conventions
 - ...
 
+## Variants And Formats
+| Variant | Format/Path | Notes |
+| --- | --- | --- |
+| ... | ... | ... |
+
 ## Verification
+- ...
+
+## Common Pitfalls
 - ...
 
 ## Boundaries
@@ -76,12 +115,13 @@ Omit sections that do not add useful repo-specific information.
 
 1. State assumptions and success criteria briefly.
 2. Inspect source files listed in Source Order.
-3. Draft the shortest useful root `AGENTS.md`.
-4. Add nested `AGENTS.md` files only when a subtree has distinct commands, stack, generated outputs, or ownership boundaries.
-5. If updating an existing file, edit narrowly and keep valid instructions.
-6. Verify all referenced commands, files, and directories exist.
-7. Run lightweight validation available for the file type, such as Markdown lint, syntax checks, or simple grep/path checks.
-8. Report changed files, verification performed, and any commands that were not run.
+3. Identify the repo-specific rules future agents would otherwise miss: source-of-truth files, standard flows, variants, special cases, and pitfalls.
+4. Draft the shortest useful root `AGENTS.md`.
+5. Add nested `AGENTS.md` files only when a subtree has distinct commands, stack, generated outputs, or ownership boundaries.
+6. If updating an existing file, edit narrowly and keep valid instructions.
+7. Verify all referenced commands, files, and directories exist.
+8. Run lightweight validation available for the file type, such as Markdown lint, syntax checks, or simple grep/path checks.
+9. Report changed files, verification performed, and any commands that were not run.
 
 ## Quality Checklist
 
@@ -92,6 +132,9 @@ Omit sections that do not add useful repo-specific information.
 - It avoids duplicating README, CI, formatter, and linter details.
 - It names completion checks and high-risk boundaries.
 - Nested files do not conflict with the root file.
+- Step-by-step workflows include every registration, generated file, context update, and test file that repo evidence requires.
+- Format or placeholder differences are explicit when variants exist.
+- Common pitfalls are actionable and tied to repo evidence.
 
 ## Output
 
