@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tangdou Downloader"
+  short_description: "Download Tangdou videos safely by VID"
+  default_prompt: "Use $tangdou-downloader to inspect and download this Tangdou video by VID."
