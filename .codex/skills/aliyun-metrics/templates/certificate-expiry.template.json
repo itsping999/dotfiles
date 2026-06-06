@@ -15,11 +15,28 @@
     "source_type": [
       "console_snapshot"
     ],
+    "required_tabs": [
+      "formal_certificates",
+      "personal_test_certificates",
+      "uploaded_certificates"
+    ],
+    "visited_tabs": [
+      "formal_certificates",
+      "personal_test_certificates",
+      "uploaded_certificates"
+    ],
     "resource_scope": "账号全部资源",
     "console_region": "cn-hangzhou"
   },
   "overview": {
     "certificate_total": 3,
+    "formal_certificates": 0,
+    "test_certificates": 0,
+    "uploaded_certificates": 3,
+    "active_certificates": 3,
+    "expired": 0,
+    "earliest_expiry": "YYYY-MM-DD",
+    "earliest_remaining_days": 19,
     "reminder_not_enabled": 3,
     "undeployed_cloud_products": 0,
     "pending_renewal": 0
@@ -31,13 +48,18 @@
       "cert_identifier": "XXXXXXXX-cn-hangzhou",
       "brand": "ZeroSSL",
       "algorithm": "ECC_256",
+      "type": "uploaded",
+      "status_code": "uploaded",
       "status": "上传成功",
       "bound_domains": [
         "example.com",
         "*.example.com"
       ],
+      "domains": "example.com,*.example.com",
       "remaining_days_ui": 19,
       "expires_on": "YYYY-MM-DD",
+      "not_after": "YYYY-MM-DD",
+      "notice_status": "disabled",
       "deployed": false
     }
   ],
@@ -52,7 +74,7 @@
     "当前没有已部署到云产品的证书，也没有待续费证书。"
   ],
   "notes": [
-    "本次统计基于数字证书管理服务 -> SSL证书管理 V2.0 -> 上传证书列表页。",
+    "本次统计基于数字证书管理服务 -> SSL证书管理 V2.0 的正式证书、个人测试证书与上传证书三个标签页。",
     "剩余天数采用控制台直接展示的 UI 数值 remaining_days_ui。"
   ]
 }

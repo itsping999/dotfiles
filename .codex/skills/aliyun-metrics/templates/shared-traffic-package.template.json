@@ -1,0 +1,80 @@
+{
+  "scope": {
+    "resource_type": "Shared traffic package deduct logs",
+    "scope_type": "account_level_deduct_logs",
+    "selection_basis": "通过当前已登录阿里云费用中心资源包使用明细页，按统计时间窗筛选共享流量包与 NAT 网关资源包抵扣日志"
+  },
+  "collection": {
+    "source": "Aliyun billing-cost console via local browser",
+    "dashboard_view": "费用与成本 > 资源包 > 使用明细",
+    "apis_observed": [
+      "BssOpenAPI-V3__DescribeDeductLogs",
+      "BssOpenAPI-V3__DescribeDistinctCommodityFromDeductLog",
+      "BssOpenAPI-V3__DescribeDistinctBillingCommodityFromDeductLog"
+    ],
+    "source_type": [
+      "console_page_request_extraction",
+      "billing_deduct_log"
+    ]
+  },
+  "time_window": {
+    "start": "YYYY-MM-DD HH:MM:SS",
+    "end": "YYYY-MM-DD HH:MM:SS",
+    "timezone": "Asia/Shanghai",
+    "source": "invocation.time_window"
+  },
+  "intended_use": [
+    "weekly_report_appendix",
+    "public_network_capacity_review"
+  ],
+  "generated_at": "YYYY-MM-DDTHH:MM:SS+08:00",
+  "aggregate_metrics": {
+    "shared_flowbag_log_count": 0,
+    "shared_flowbag_total_deduct_mb": 0,
+    "shared_flowbag_total_deduct_gb": 0,
+    "shared_flowbag_latest_remaining_gb": 0,
+    "nat_cu_log_count": 0,
+    "nat_cu_total_deduct_cu": 0,
+    "nat_cu_latest_remaining_cu": 0,
+    "billing_commodity_distribution": {},
+    "resource_commodity_codes": []
+  },
+  "shared_flowbag_logs": [
+    {
+      "deduct_time": "YYYY-MM-DD HH:MM:SS",
+      "template_name": "亚太通用（全时）",
+      "resource_package_instance_id": "flowpack-xxxx",
+      "billing_instance_id": "i-xxxx",
+      "billing_commodity_name": "云服务器ECS-包年包月",
+      "billing_price_field_name": "流出流量",
+      "capacity_before_deduct": "XXX.XXXXXX GB",
+      "capacity_deducted": "XXX.XXXXXX MB",
+      "capacity_after_deduct": "XXX.XXXXXX GB",
+      "billing_start_time": "YYYY-MM-DD HH:MM:SS",
+      "billing_end_time": "YYYY-MM-DD HH:MM:SS"
+    }
+  ],
+  "nat_cu_logs": [
+    {
+      "deduct_time": "YYYY-MM-DD HH:MM:SS",
+      "template_name": "中国内地区域",
+      "resource_package_instance_id": "nat_cubag-xxxx",
+      "billing_instance_id": "ngw-xxxx",
+      "billing_commodity_name": "NAT网关（按量付费）",
+      "billing_price_field_name": "容量单位（CU费）",
+      "capacity_before_deduct": "XXX.XXXXXX CU",
+      "capacity_deducted": "X.XXXXXX CU",
+      "capacity_after_deduct": "XXX.XXXXXX CU",
+      "billing_start_time": "YYYY-MM-DD HH:MM:SS",
+      "billing_end_time": "YYYY-MM-DD HH:MM:SS"
+    }
+  ],
+  "report_highlights": [
+    "本周期共享流量包共抵扣 X 条公网流出流量日志，总抵扣量约 Y.YY GB。",
+    "本周期 NAT 网关资源包共抵扣 X 条日志，总抵扣量约 Y.YY CU。"
+  ],
+  "notes": [
+    "资源包使用明细页只支持查询消费开始时间未超过 1 年的数据。",
+    "受云产品延迟出账影响，控制台提示一般只能查询到约 6 小时前的抵扣信息。"
+  ]
+}

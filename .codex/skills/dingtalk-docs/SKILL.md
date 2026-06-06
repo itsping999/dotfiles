@@ -47,6 +47,8 @@ Collect or infer these values before using the workflow:
 
 Prefer explicit file upload over editor typing. This skill should not convert Markdown into rich text by pasting body text into the editor unless the user explicitly asks for that fallback.
 
+For recurring weekly reports, prefer `skip` or a deliberate `replace` workflow. Avoid `keep_both` unless the caller explicitly wants duplicate historical copies, because DingTalk will create suffixes such as `(1)` and `(2)` for same-name uploads.
+
 ## Browser Assumptions
 
 Use `chrome-devtools` MCP against the browser that is already open.
@@ -75,7 +77,7 @@ Prefer reusing an existing DingTalk Docs tab. Open a new tab only if no suitable
    - If clicking the favorite row only focuses the virtualized list and does not open the folder, inspect `box/api/v2/star/list` and navigate directly to `https://alidocs.dingtalk.com/i/nodes/<dentryUuid>`.
 5. Inspect whether a same-name file or document already exists in that folder.
 6. Follow the requested `if_exists` behavior:
-   - `keep_both`: upload directly and let DingTalk keep both versions
+   - `keep_both`: upload directly and let DingTalk keep both versions; warn that same-name items may appear as `(1)`, `(2)` duplicates
    - `replace`: delete/rename old one only if the UI supports a reliable replace path; otherwise stop and report
    - `skip`: stop if a same-name item already exists
 7. Use folder-level upload or import flow to upload the local file.
@@ -121,9 +123,12 @@ When uploading a file:
 - prefer the caller-provided local file path as the source of truth
 - prefer `.md` files when the upstream skill already generated Markdown
 - preserve the original file name unless the caller explicitly requests renaming
+- for weekly reports such as `2026-W22.md`, check for existing titles `2026-W22`, `2026-W22(1)`, `2026-W22(2)` before uploading; do not create another suffixed copy unless requested
 - if the caller/upstream workflow asks to align with an existing folder naming convention, it is acceptable to upload a temporary copy with the expected filename while leaving the local source file unchanged
 - use DingTalk's upload or import entry instead of editor typing whenever possible
 - on folder pages, prefer the folder-level `Upload -> Upload File` path instead of attempting to upload from search views or document pages
+
+Current DingTalk UI note: after `Upload -> Upload File`, the underlying file input may be hidden as `input#portal_upload_files`. If `upload_file` cannot attach to the menu item, make that input visible, upload to the visible chooser, then dispatch a bubbling `change` event. This can trigger duplicate uploads in some sessions; verify the task panel count and folder list immediately afterward.
 
 If DingTalk imports `.md` as an online doc preview rather than a raw attachment, accept that behavior. The skill should not try to re-render the Markdown itself.
 
@@ -134,6 +139,7 @@ Before finishing, verify:
 - the correct folder was opened
 - the uploaded item name matches the local file name or expected title
 - the uploaded item appears in the folder list
+- no unexpected duplicate same-title items were created; if duplicates were created and reliable UI deletion is unavailable, report their exact names for manual cleanup
 - the resulting page URL is captured if available
 - when a stable URL is needed, open the uploaded item from the folder list and return the resulting `/i/nodes/<node>` URL
 - if the upload produces a transient success toast or task panel, prefer verifying via the refreshed folder list rather than trusting the toast alone

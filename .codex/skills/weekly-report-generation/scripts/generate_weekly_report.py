@@ -1174,6 +1174,14 @@ def metric_average(metric_block: Any) -> float | None:
     return None
 
 
+def metric_average_any(metric_block: Any) -> float | None:
+    if isinstance(metric_block, dict):
+        value = metric_block.get("avg")
+        if isinstance(value, (int, float)):
+            return float(value)
+    return metric_average(metric_block)
+
+
 def metric_average_mbps(metric_block: Any) -> float | None:
     value = get_nested(metric_block, "summary", "point_value_avg_mbps")
     if isinstance(value, (int, float)):
@@ -1197,6 +1205,22 @@ def format_bytes(value: float | None) -> str:
     if value >= 1024 * 1024 * 1024:
         return format_number(value / (1024 * 1024 * 1024), " GB")
     return format_number(value / (1024 * 1024), " MB")
+
+
+def format_bps_mbps(value: float | None) -> str:
+    if value is None:
+        return "/"
+    return format_number(value / 1_000_000, " Mbps")
+
+
+def format_bytes_per_second(value: float | None) -> str:
+    if value is None:
+        return "/"
+    if value >= 1024 * 1024:
+        return format_number(value / (1024 * 1024), " MB/s")
+    if value >= 1024:
+        return format_number(value / 1024, " KB/s")
+    return format_number(value, " B/s")
 
 
 def markdown_link(target: Path, base_path: Path) -> str:
@@ -1243,6 +1267,7 @@ def collect_appendix_sources(data_root: Path, week_start: str, week_end: str) ->
         "slb": snapshot_files_within_week("slb", "slb-metrics."),
         "cdn": matching_files("cdn", "cdn-usage."),
         "eip": snapshot_files_within_week("eip", "eip-load."),
+        "shared_traffic_package": matching_files("shared-traffic-package", "shared-traffic-package."),
         "certificates": snapshot_files_within_week("certificates", "certificate-expiry."),
     }
 
@@ -1318,12 +1343,50 @@ def load_certificate_expiry_summary(data_root: Path, week_start: date, week_end:
     payload = load_json(files[-1])
     summary = normalize_string(get_nested(payload, "report_compatibility", "suggested_summary"))
     if not summary:
+        summary = normalize_string(get_nested(payload, "overview", "suggested_summary"))
+    if not summary:
         overview = payload.get("overview")
         if isinstance(overview, dict):
             earliest_expiry = normalize_string(overview.get("earliest_expiry"))
             remaining_days = normalize_string(overview.get("earliest_remaining_days"))
-            if earliest_expiry and remaining_days:
+            if earliest_expiry and remaining_days and earliest_expiry not in {"无有效证书", "N/A", "/"} and remaining_days not in {"N/A", "/"}:
                 summary = f"均大于15天（最早 {earliest_expiry}，剩余 {remaining_days} 天）。"
+    if not summary:
+        certificates = payload.get("certificates") or []
+        if isinstance(certificates, list):
+            def certificate_status(item: dict[str, Any]) -> str:
+                return normalize_string(item.get("status_code") or item.get("status")).lower()
+
+            def certificate_expiry(item: dict[str, Any]) -> str:
+                return normalize_string(item.get("not_after") or item.get("expires_on"))
+
+            active_count = sum(
+                1 for item in certificates
+                if certificate_status(item) not in ("expired", "已过期", "revoked", "deleted", "已吊销", "已删除")
+            )
+            expired_count = sum(
+                1 for item in certificates
+                if certificate_status(item) in ("expired", "已过期")
+            )
+            test_count = sum(
+                1 for item in certificates
+                if "test" in normalize_string(item.get("type")).lower() or "测试" in normalize_string(item.get("status"))
+            )
+            reminder_disabled_count = sum(
+                1 for item in certificates
+                if normalize_string(item.get("notice_status")).lower() in ("disabled", "disable", "未开启")
+            )
+            expiries = [
+                value for value in (certificate_expiry(item) for item in certificates)
+                if value and value not in {"N/A", "/"}
+            ]
+            if active_count == 0 and certificates:
+                summary = f"无有效证书；当前列表页可见 {len(certificates)} 张证书，其中已过期 {expired_count} 张、个人测试证书 {test_count} 张。"
+            elif active_count:
+                earliest = min(expiries) if expiries else ""
+                reminder_text = f"，其中 {reminder_disabled_count} 张未开启到期提醒" if reminder_disabled_count else ""
+                expiry_text = f"，最早 {earliest} 到期" if earliest else ""
+                summary = f"当前有效证书 {active_count} 张{expiry_text}{reminder_text}；已过期 {expired_count} 张。"
     return {"cert_expiry": summary} if summary else {}
 
 
@@ -1357,6 +1420,8 @@ def filter_report_highlights(value: Any) -> list[str]:
             or "报告日快照" in text
             or "报告日代理" in text
             or "实时快照数据" in text
+            or "None" in text
+            or "null" in text.lower()
             or re.search(r"当天.*实时快照", text)
             or re.search(r"本次以\s+.*当天.*快照", text)
         ):
@@ -1405,6 +1470,7 @@ def render_ecs_appendix(files: list[Path], report_path: Path) -> str:
     if summary_payloads:
         source_path, payload = summary_payloads[-1]
         rows: list[list[str]] = []
+        basic_monitor_rows: list[list[str]] = []
         observations: list[str] = []
         guidance: list[str] = []
         items = payload.get("items", [])
@@ -1424,6 +1490,8 @@ def render_ecs_appendix(files: list[Path], report_path: Path) -> str:
             memory_avg = normalize_float(get_nested(metrics, "memory", "avg"))
             disk_avg = normalize_float(get_nested(metrics, "disk", "avg"))
             connections_avg = normalize_float(get_nested(metrics, "conn", "avg"))
+            network_metrics = metrics.get("network") if isinstance(metrics, dict) else None
+            disk_io_metrics = metrics.get("disk_io") if isinstance(metrics, dict) else None
             rows.append(
                 [
                     f"{instance_name} / {instance_id}",
@@ -1435,6 +1503,20 @@ def render_ecs_appendix(files: list[Path], report_path: Path) -> str:
                     format_number(connections_avg),
                 ]
             )
+            if isinstance(network_metrics, dict) or isinstance(disk_io_metrics, dict):
+                basic_monitor_rows.append(
+                    [
+                        f"{instance_name} / {instance_id}",
+                        region_id,
+                        format_bps_mbps(metric_average_any(get_nested(network_metrics, "public_in_bps"))),
+                        format_bps_mbps(metric_average_any(get_nested(network_metrics, "public_out_bps"))),
+                        format_number(metric_average_any(get_nested(network_metrics, "public_out_bandwidth_percent")), "%"),
+                        format_bytes_per_second(metric_average_any(get_nested(disk_io_metrics, "read_bps"))),
+                        format_bytes_per_second(metric_average_any(get_nested(disk_io_metrics, "write_bps"))),
+                        format_number(metric_average_any(get_nested(disk_io_metrics, "read_iops"))),
+                        format_number(metric_average_any(get_nested(disk_io_metrics, "write_iops"))),
+                    ]
+                )
             if cpu_avg is not None and cpu_avg >= 70:
                 guidance.append(
                     f"注意：{instance_name} 的 CPU 均值约 {format_number(cpu_avg, '%')}，已进入高位区间，建议优先复核该实例的热点进程、计划任务和上下游请求放量情况。"
@@ -1454,6 +1536,13 @@ def render_ecs_appendix(files: list[Path], report_path: Path) -> str:
 
         total_count = payload.get("total_instances") or len(items)
         observations.append(f"本周期纳入 {total_count} 台 ECS，其中 Running {running_count} 台、Stopped {stopped_count} 台。")
+        aggregate_metrics = payload.get("aggregate_metrics") if isinstance(payload.get("aggregate_metrics"), dict) else {}
+        basic_network_count = aggregate_metrics.get("instances_with_basic_monitor_network_data")
+        basic_disk_io_count = aggregate_metrics.get("instances_with_basic_monitor_disk_io_data")
+        if basic_network_count or basic_disk_io_count:
+            observations.append(
+                f"已通过实例详情基础监控补齐 {basic_network_count or len(basic_monitor_rows)} 台 ECS 的网络指标、{basic_disk_io_count or len(basic_monitor_rows)} 台 ECS 的磁盘 IO 指标。"
+            )
         if stopped_count:
             observations.append(f"当前存在 {stopped_count} 台停机 ECS，建议结合业务用途确认是否为预期停机，避免遗漏历史闲置实例。")
         if items:
@@ -1477,6 +1566,10 @@ def render_ecs_appendix(files: list[Path], report_path: Path) -> str:
                 ["实例", "地域", "状态", "CPU 平均", "内存平均", "磁盘平均", "连接数平均"],
                 rows,
             ),
+            render_table(
+                ["实例", "地域", "公网入平均", "公网出平均", "公网出带宽占用", "磁盘读平均", "磁盘写平均", "读 IOPS", "写 IOPS"],
+                basic_monitor_rows,
+            ) if basic_monitor_rows else "",
             "#### 重点观察\n\n" + render_bullets(observations[:6], "本周期暂无额外 ECS 观察结论。"),
             render_guidance(guidance, "建议持续关注高连接入口、磁盘高水位实例和停机实例清单。"),
         ]
@@ -1649,10 +1742,17 @@ def render_redis_appendix(files: list[Path], report_path: Path) -> str:
 
     payload = load_json(files[0])
     rows: list[list[str]] = []
+    observations: list[str] = []
     guidance: list[str] = []
     for item in payload.get("instances", []):
         instance = item.get("instance", {})
         metrics = item.get("metrics", {})
+        name = normalize_string(instance.get("name")) or "-"
+        cpu_usage = metric_average(metrics.get("cpu_usage"))
+        memory_usage = metric_average(metrics.get("memory_usage"))
+        used_memory_bytes = metric_average(metrics.get("used_memory_bytes"))
+        connection_usage = metric_average(metrics.get("connection_usage"))
+        hit_rate = metric_average(metrics.get("hit_rate"))
         connected_clients = metric_average(metrics.get("connected_clients"))
         evicted_keys = metric_average(metrics.get("evicted_keys_per_sec"))
         avg_ttl = metric_average(metrics.get("avg_ttl_seconds"))
@@ -1667,6 +1767,16 @@ def render_redis_appendix(files: list[Path], report_path: Path) -> str:
                 format_number(evicted_keys, "/s", 4),
             ]
         )
+        if cpu_usage is not None:
+            observations.append(f"{name} 本周平均 CPU {format_number(cpu_usage, '%')}。")
+        if used_memory_bytes is not None:
+            observations.append(f"{name} 已用内存平均 {format_bytes(used_memory_bytes)}。")
+        elif memory_usage is not None:
+            observations.append(f"{name} 内存使用率平均 {format_number(memory_usage, '%')}。")
+        if connection_usage is not None:
+            observations.append(f"{name} 连接使用率平均 {format_number(connection_usage, '%')}。")
+        if hit_rate is not None:
+            observations.append(f"{name} 命中率平均 {format_number(hit_rate, '%')}。")
         if connected_clients is not None and connected_clients >= 1000:
             guidance.append(
                 f"注意：{instance.get('name', '-') } 的平均连接数已超过 1000，建议复核应用连接池、长连接复用和无效客户端回收策略。"
@@ -1693,7 +1803,10 @@ def render_redis_appendix(files: list[Path], report_path: Path) -> str:
             ["实例", "OPS 平均", "连接数平均", "已用内存平均", "总键数平均", "过期速率平均", "逐出速率平均"],
             rows,
         ),
-        "#### 重点观察\n\n" + render_bullets(filter_report_highlights(payload.get("report_highlights"))[:6], "本周期暂无额外 Redis 观察结论。"),
+        "#### 重点观察\n\n" + render_bullets(
+            dedupe_texts(filter_report_highlights(payload.get("report_highlights")) + observations)[:3],
+            "本周期暂无额外 Redis 观察结论。",
+        ),
         render_guidance(guidance, "建议持续观察连接数、键数量和淘汰情况，并补齐碎片率与命中率。"),
     ]
     return render_component_block("5.3 Redis", files, body_parts, report_path)
@@ -1819,12 +1932,18 @@ def render_cdn_appendix(files: list[Path], report_path: Path) -> str:
     payload = load_json(files[0])
     inventory = payload.get("domain_inventory", {})
     usage = payload.get("usage_overview", {})
+    peak_bandwidth = get_nested(usage, "recent_7d_peak_bandwidth", "value")
+    if peak_bandwidth is None:
+        peak_bandwidth = usage.get("bandwidth_peak_mbps")
+    peak_bandwidth_time = get_nested(usage, "recent_7d_peak_bandwidth", "observed_at")
+    if not normalize_string(peak_bandwidth_time):
+        peak_bandwidth_time = usage.get("bandwidth_peak_time")
     guidance: list[str] = []
     domain_rows = [[
         normalize_string(inventory.get("total_count")) or "/",
-        normalize_string(inventory.get("online_count")) or "/",
-        normalize_string(get_nested(usage, "recent_7d_peak_bandwidth", "value")) or "/",
-        normalize_string(get_nested(usage, "recent_7d_peak_bandwidth", "observed_at")) or "/",
+        normalize_string(inventory.get("online_count") if inventory.get("online_count") is not None else inventory.get("running_count")) or "/",
+        normalize_string(peak_bandwidth) or "/",
+        normalize_string(peak_bandwidth_time) or "/",
     ]]
     package_rows = [
         [
@@ -1863,10 +1982,9 @@ def render_cdn_appendix(files: list[Path], report_path: Path) -> str:
         guidance.append(
             f"注意：{ '、'.join(low_remaining_regions) } 的 CDN 资源包剩余占比较低，建议提前核对补购计划或优化跨区流量策略。"
         )
-    peak_bandwidth = get_nested(usage, "recent_7d_peak_bandwidth", "value")
     if isinstance(peak_bandwidth, (int, float)) and float(peak_bandwidth) >= 200:
         guidance.append("建议：近 7 天 CDN 带宽峰值已超过 200 Mbps，需同步核对源站带宽、回源限流和热点资源缓存策略。")
-    if normalize_string(inventory.get("total_count")) == normalize_string(inventory.get("online_count")):
+    if normalize_string(inventory.get("total_count")) == normalize_string(inventory.get("online_count") if inventory.get("online_count") is not None else inventory.get("running_count")):
         guidance.append("注意：当前全部域名在线，说明可用性状态正常，但仍建议按月复核缓存规则、证书有效期和回源地址变更。")
     if any(
         normalize_string(item.get("package_type")).replace(" ", "") == "静态HTTPS请求数"
@@ -1878,7 +1996,15 @@ def render_cdn_appendix(files: list[Path], report_path: Path) -> str:
     body_parts = [
         render_table(["域名总数", "在线域名", "近7天带宽峰值(Mbps)", "峰值时间"], domain_rows),
         render_table(["资源类型", "区域", "资源包总量", "当月用量", "剩余量", "剩余占比", "可抵扣资源包", "计费方式"], package_rows),
-        "#### 重点观察\n\n" + render_bullets(filter_report_highlights(payload.get("report_highlights"))[:6], "当前暂无额外 CDN 观察结论。"),
+        "#### 重点观察\n\n" + render_bullets(
+            dedupe_texts(
+                filter_report_highlights(payload.get("report_highlights")) + [
+                    f"CDN 当前在线域名 {domain_rows[0][1]} 个，近 7 天带宽峰值 {domain_rows[0][2]} Mbps（{domain_rows[0][3]}）。",
+                    f"本次识别到 {len(usage.get('package_usage_by_region', []))} 个可用 CDN/DCDN 资源包。",
+                ]
+            )[:6],
+            "当前暂无额外 CDN 观察结论。",
+        ),
         render_guidance(guidance, "建议继续跟踪资源包消耗、带宽峰值与回源策略。"),
     ]
     return render_component_block("5.6 CDN", files, body_parts, report_path)
@@ -1928,6 +2054,77 @@ def render_eip_appendix(files: list[Path], report_path: Path) -> str:
     return render_component_block("5.7 EIP", files, body_parts, report_path)
 
 
+def render_shared_traffic_package_appendix(files: list[Path], report_path: Path) -> str:
+    if not files:
+        return render_component_block("5.8 共享流量包", [], ["- 未找到共享流量包或 NAT 网关资源包抵扣日志。"], report_path)
+
+    payload = load_json(files[0])
+    aggregate = payload.get("aggregate_metrics", {})
+    guidance: list[str] = []
+
+    summary_rows = [[
+        normalize_string(aggregate.get("shared_flowbag_log_count")) or "/",
+        format_number(normalize_float(aggregate.get("shared_flowbag_total_deduct_gb")), " GB", 2),
+        format_number(normalize_float(aggregate.get("shared_flowbag_latest_remaining_gb")), " GB", 2),
+        normalize_string(aggregate.get("nat_cu_log_count")) or "/",
+        format_number(normalize_float(aggregate.get("nat_cu_total_deduct_cu")), " CU", 2),
+        format_number(normalize_float(aggregate.get("nat_cu_latest_remaining_cu")), " CU", 2),
+    ]]
+
+    flow_rows = [
+        [
+            normalize_string(item.get("template_name")) or "-",
+            normalize_string(item.get("billing_commodity_name")) or "-",
+            normalize_string(item.get("billing_instance_id")) or "-",
+            normalize_string(item.get("capacity_deducted")) or "/",
+            normalize_string(item.get("capacity_after_deduct")) or "/",
+            normalize_string(item.get("deduct_time")) or "/",
+        ]
+        for item in payload.get("shared_flowbag_logs", [])[:10]
+    ]
+    nat_rows = [
+        [
+            normalize_string(item.get("template_name")) or "-",
+            normalize_string(item.get("billing_price_field_name")) or "-",
+            normalize_string(item.get("billing_instance_id")) or "-",
+            normalize_string(item.get("capacity_deducted")) or "/",
+            normalize_string(item.get("capacity_after_deduct")) or "/",
+            normalize_string(item.get("deduct_time")) or "/",
+        ]
+        for item in payload.get("nat_cu_logs", [])[:10]
+    ]
+
+    shared_gb = normalize_float(aggregate.get("shared_flowbag_total_deduct_gb"))
+    shared_remaining = normalize_float(aggregate.get("shared_flowbag_latest_remaining_gb"))
+    nat_cu = normalize_float(aggregate.get("nat_cu_total_deduct_cu"))
+    nat_remaining = normalize_float(aggregate.get("nat_cu_latest_remaining_cu"))
+    commodity_dist = aggregate.get("billing_commodity_distribution") or {}
+
+    if shared_gb is not None and shared_gb >= 1:
+        guidance.append(f"注意：本周期共享流量包已抵扣约 {shared_gb:.2f} GB 公网流出流量，建议继续跟踪周度消耗增速，避免高峰期超出资源包覆盖。")
+    if shared_remaining is not None and shared_remaining <= 700:
+        guidance.append(f"建议：共享流量包剩余量约 {shared_remaining:.2f} GB，建议与 EIP / CDN / 跨地域入口一起评估下周是否需要补购或分流。")
+    if nat_cu is not None and nat_cu > 0:
+        guidance.append(f"注意：本周期 NAT 网关资源包已抵扣约 {nat_cu:.2f} CU，建议持续观察 NAT 网关容量单位与实例费抵扣是否同步增长。")
+    if nat_remaining is not None and nat_remaining <= 230:
+        guidance.append(f"改进：NAT 网关资源包剩余约 {nat_remaining:.2f} CU，建议提前校验资源包续购计划，避免公网出口容量费用波动。")
+    if commodity_dist:
+        top_targets = "、".join(
+            f"{name}:{count}"
+            for name, count in sorted(commodity_dist.items(), key=lambda item: item[1], reverse=True)[:3]
+        )
+        guidance.append(f"建议：本周期资源包抵扣主要覆盖 {top_targets}，建议将共享流量包与公网入口责任链路一并维护。")
+
+    body_parts = [
+        render_table(["共享流量日志数", "共享流量抵扣总量", "共享流量包剩余", "NAT 日志数", "NAT 抵扣总量", "NAT 资源包剩余"], summary_rows),
+        render_table(["资源包类型", "被抵扣商品", "被抵扣实例ID", "本次抵扣量", "抵扣后剩余", "抵扣时间"], flow_rows),
+        render_table(["资源包类型", "被抵扣计费项", "被抵扣实例ID", "本次抵扣量", "抵扣后剩余", "抵扣时间"], nat_rows),
+        "#### 重点观察\n\n" + render_bullets(filter_report_highlights(payload.get("report_highlights"))[:6], "当前暂无额外共享流量包观察结论。"),
+        render_guidance(guidance, "建议持续跟踪共享流量包、NAT 网关资源包与公网出口流量之间的关系。"),
+    ]
+    return render_component_block("5.8 共享流量包", files, body_parts, report_path)
+
+
 def render_appendix_sections(record: dict[str, Any], data_root: Path, report_path: Path) -> str:
     sources = collect_appendix_sources(data_root, record["week_start"], record["week_end"])
     sections = [
@@ -1938,6 +2135,7 @@ def render_appendix_sections(record: dict[str, Any], data_root: Path, report_pat
         render_slb_appendix(sources["slb"], report_path),
         render_cdn_appendix(sources["cdn"], report_path),
         render_eip_appendix(sources["eip"], report_path),
+        render_shared_traffic_package_appendix(sources["shared_traffic_package"], report_path),
     ]
     return "\n\n".join(sections)
 

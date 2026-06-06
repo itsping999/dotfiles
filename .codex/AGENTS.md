@@ -4,14 +4,14 @@
 
 - Check `~/.codex/memories/` before tasks that touch repositories, global config, skills, prior decisions, or multi-step workflows. Start with keyword search; open only directly relevant memory files.
 - Record only evidence-backed reusable facts or procedures. Facts go to memory/ad-hoc notes; repeated procedures go to skills; one-off runtime state, transient errors, guesses, and secrets are discarded. Redact sensitive sources and date facts likely to change.
-- Shared skills live in `~/.agents/skills/` and must include trigger, inputs, workflow, verification, output, and safety.
+- Shared skills live in `~/.codex/skills/` and must include trigger, inputs, workflow, verification, output, and safety.
 
 ## File & Sync Rules
 
 - Use Codex memory, local skills, repo docs, and `~/wiki/` as current sources. Use legacy profile files only as historical references.
 - When memory cites external paths, use memory first. Inspect the original path only when the needed fact is missing or must be refreshed.
 - When changing shared skills or global instructions, edit both copies and verify parity:
-  - Skills: `~/.agents/skills/` <-> `~/dotfiles/.agents/skills/`
+  - Skills: `~/.codex/skills/` <-> `~/dotfiles/.codex/skills/`
   - Instructions: `~/.codex/AGENTS.md` <-> `~/dotfiles/.codex/AGENTS.md`
 - After changing a skill or instruction, run a lightweight check: inspect the changed section, compare synced copies, and remove obsolete wording introduced by the change.
 

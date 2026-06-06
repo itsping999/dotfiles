@@ -2,8 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$SCRIPT_DIR/.agents/skills"
-TARGET_DIR="$HOME/.agents/skills"
+SOURCE_DIR="$SCRIPT_DIR/.codex/skills"
+TARGET_DIR="$HOME/.codex/skills"
 DRY_RUN=false
 DELETE=false
 
@@ -11,12 +11,12 @@ usage() {
     cat <<'EOF'
 Usage: skills.sh [--dry-run] [--delete]
 
-Sync tracked agent skills into ~/.agents/skills.
-By default, files that exist only in ~/.agents/skills are preserved.
+Sync tracked Codex skills into ~/.codex/skills.
+By default, files that exist only in ~/.codex/skills are preserved.
 
 Options:
   -n, --dry-run   Show files that would be synced without changing anything
-  --delete        Delete files in ~/.agents/skills that are not tracked here
+  --delete        Delete files in ~/.codex/skills that are not tracked here
   -h, --help      Show this help
 EOF
 }
@@ -52,6 +52,10 @@ mkdir -p "$TARGET_DIR"
 rsync_args=(
     -avh
     --exclude ".DS_Store"
+    --exclude "__pycache__/"
+    --exclude "*.pyc"
+    --exclude ".system/"
+    --exclude "codex-primary-runtime/"
 )
 
 if [[ "$DELETE" == true ]]; then

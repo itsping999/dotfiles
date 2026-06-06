@@ -25,6 +25,7 @@ do_it() {
         --exclude ".git/"
         --exclude ".github/"
         --exclude ".agents/"
+        --exclude ".codex/skills/"
         --exclude "bootstrap.sh"
         --exclude "skills.sh"
         --exclude "pacman.sh"
