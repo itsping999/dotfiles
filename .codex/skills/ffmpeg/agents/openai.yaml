@@ -1,0 +1,4 @@
+interface:
+  display_name: "FFmpeg"
+  short_description: "Convert, inspect, and batch process media"
+  default_prompt: "Use $ffmpeg to inspect this media file and choose the safest conversion command."
