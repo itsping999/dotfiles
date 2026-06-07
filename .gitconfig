@@ -1,7 +1,7 @@
 [core]
     editor = vim
     excludesfile = ~/.config/git/ignore
-    attributesfile = ~/.gitattributes
+    attributesfile = ~/.config/git/attributes
     autocrlf = input
     filemode = false
     precomposeunicode = true
