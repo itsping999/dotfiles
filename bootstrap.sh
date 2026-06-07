@@ -32,6 +32,7 @@ do_it() {
         --exclude "brew.sh"
         --exclude "Brewfile"
         --exclude "README.md"
+        --exclude "AGENTS.md"
         --exclude "LICENSE-MIT.txt"
         --exclude ".DS_Store"
         -avh
