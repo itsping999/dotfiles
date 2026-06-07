@@ -1,0 +1,8 @@
+.git
+.gitignore
+*.tar
+*.tar.gz
+*.tgz
+*.tar.xz
+dist/
+build/

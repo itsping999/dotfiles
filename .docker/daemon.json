@@ -1,0 +1,30 @@
+{
+  "registry-mirrors": [
+    "https://docker.1ms.run",
+    "https://docker.m.daocloud.io"
+  ],
+  "features": {
+    "buildkit": true
+  },
+  "builder": {
+    "gc": {
+      "enabled": true,
+      "defaultKeepStorage": "20GB"
+    }
+  },
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m",
+    "max-file": "3"
+  },
+  "default-address-pools": [
+    {
+      "base": "172.30.0.0/16",
+      "size": 24
+    },
+    {
+      "base": "172.31.0.0/16",
+      "size": 24
+    }
+  ]
+}
