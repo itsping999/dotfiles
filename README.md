@@ -58,6 +58,7 @@ bash ./pacman.sh
 - `.gitconfig`: Git defaults, identity, and URL rewrites
 - `.gitmessage`: Angular/Conventional Commits template
 - `.config/git/ignore`: global Git ignore rules
+- `.docker/daemon.json`: Docker daemon mirrors, BuildKit, log rotation, and address pools
 - `.codex/skills`: tracked shared Codex skills
 - `.codex/AGENTS.md`: tracked global Codex instructions
 - `Brewfile`: macOS Homebrew package manifest

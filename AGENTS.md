@@ -12,6 +12,8 @@
 - `.codex/AGENTS.md` is the dotfiles-tracked mirror of the live global Codex instructions, not the project-level instructions for this repo.
 - `.codex/skills/` contains tracked shared Codex skills. Each skill's `SKILL.md` is the entrypoint; templates, scripts, references, notices, and licenses under that skill directory travel with it.
 - Shell/editor config files such as `.zshrc`, `.vimrc`, `.tmux.conf`, `.gitconfig`, `.gitmessage`, and `.config/git/ignore` are copied to `$HOME` by `bootstrap.sh`.
+- `.docker/daemon.json` is the global Docker daemon configuration with China mirror registries, BuildKit, log rotation, and address pool settings.
+- `dockerfiles/` is a directory in this repo that maintains Docker image definitions for build and packaging workflows. Each subdirectory contains a `Dockerfile` and its own `README.md`.
 
 ## Source Of Truth
 | Concern | File/Directory | Notes |
@@ -24,6 +26,9 @@
 | Global Codex instructions | `.codex/AGENTS.md` and `~/.codex/AGENTS.md` | Change both copies when updating global instructions, then verify parity. |
 | Tracked shared Codex skills | `.codex/skills/` and `~/.codex/skills/` | Change both live and tracked copies when maintaining shared skills, or edit tracked copy and run `bash ./skills.sh` to sync live. |
 | Shell CI coverage | `.github/workflows/shell-checks.yml` | CI currently checks `bootstrap.sh`, `brew.sh`, and `pacman.sh`; update the workflow when adding another maintained shell script. |
+| Docker daemon config | `.docker/daemon.json` | Global daemon settings; `bootstrap.sh` syncs this into `~/.docker/daemon.json`. Restart Docker after changes. |
+| Docker image definitions | `dockerfiles/` | Docker image definitions; each subdirectory is a self-contained image build context with its own `Dockerfile`. |
+| Cross-compile builder image | `dockerfiles/cross-compile-builder/` | Go + Linaro ARM/ARM64 C toolchains for CGO cross-compilation on `linux/amd64`. Go version defaults to `latest` and is overridable via `GO_VERSION` build arg. |
 
 ## Commands
 | Task | Command |
@@ -37,6 +42,9 @@
 | Shell syntax check | `bash -n bootstrap.sh brew.sh pacman.sh skills.sh` |
 | Shell lint | `shellcheck bootstrap.sh brew.sh pacman.sh skills.sh` |
 | Shell format check | `shfmt -d -i 4 -ci bootstrap.sh brew.sh pacman.sh skills.sh` |
+| Build cross-compile-builder image | `docker build -t cross-compile-builder ./dockerfiles/cross-compile-builder/` |
+| Build with specific Go version | `docker build --build-arg GO_VERSION=1.22.4 -t cross-compile-builder ./dockerfiles/cross-compile-builder/` |
+| Docker daemon config check | `docker info --format '{{.RegistryConfig.Mirrors}}'` |
 
 ## Common Workflows
 ### Add Or Remove A Homebrew Item
@@ -61,11 +69,25 @@
 2. Verify parity with `cmp -s ~/.codex/AGENTS.md .codex/AGENTS.md`.
 3. Inspect the changed section after syncing so stale or duplicate wording does not remain.
 
+### Build Or Update Docker Images
+1. Edit the relevant `Dockerfile` under `dockerfiles/<image-name>/`.
+2. For `cross-compile-builder`: the Go version defaults to `latest` (fetched from `go.dev`); override with `GO_VERSION` build arg if a specific version is needed.
+3. The base image defaults to `docker.1ms.run/library/debian:bookworm-slim` (China mirror); override with `BASE_IMAGE` build arg if needed.
+4. Build and test locally with `docker build -t <image-name> ./dockerfiles/<image-name>/`.
+5. For `cross-compile-builder`, verify the image works: `docker run --rm cross-compile-builder go version` and test a cross-compilation target.
+
+### Update Docker Daemon Configuration
+1. Edit `.docker/daemon.json`.
+2. Run `bash ./bootstrap.sh --dry-run` to verify the file is included in sync.
+3. Apply with `bash ./bootstrap.sh --force --backup`.
+4. Restart Docker Desktop for changes to take effect. Verify mirrors with `docker info --format '{{.RegistryConfig.Mirrors}}'`.
+
 ## Verification
 - For shell script changes, run `shellcheck`, `bash -n`, and `shfmt -d -i 4 -ci` on the edited scripts. Include `skills.sh` in local checks even though current CI only checks `bootstrap.sh`, `brew.sh`, and `pacman.sh`.
 - For package manifest changes, run `brew bundle check --no-upgrade --file Brewfile` on macOS. Use `bash ./brew.sh --dry-run` when `brew.sh` changes.
 - For sync-boundary changes, run the relevant `--dry-run` command and inspect the file list before applying.
 - For global instruction or shared-skill changes, verify live/tracked parity or run the sync command, then show the exact verification result.
+- For Docker image changes, run `docker build` and a basic smoke test (`docker run --rm <image> <version-command>`) to verify the image builds and the primary tool works.
 
 ## Common Pitfalls
 - Do not treat `.codex/AGENTS.md` as this repo's root agent guide; it is a tracked global-instruction mirror.
@@ -73,6 +95,10 @@
 - Do not use `brew list --formula` alone to decide what belongs in `Brewfile`; it includes dependencies.
 - Do not delete `~/.codex/skills/.system/` or runtime-provided skill directories during skill sync cleanup.
 - Keep shell script formatting aligned with CI: 4-space indentation and `shfmt -ci` for the checked scripts.
+- `dockerfiles/` is part of the dotfiles repo; edit Dockerfiles directly here.
+- The `cross-compile-builder` image platform is hardcoded to `linux/amd64` because the Linaro toolchains are x86_64 binaries. Do not change `IMAGE_PLATFORM`.
+- `dockerfiles/` is excluded from `bootstrap.sh` sync; it is not copied to `$HOME`.
+- Do not edit `.docker/daemon.json` thinking it is a per-project config; it is the global daemon configuration synced to `~/.docker/` by `bootstrap.sh`.
 
 ## Maintenance Trigger
 - Update this `AGENTS.md` when the bootstrap boundary, package-management workflow, shared-skill sync model, global-instruction mirror rule, or CI verification commands change.
