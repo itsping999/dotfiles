@@ -46,7 +46,7 @@ Rule 7 — Test First
 For feature work and bug fixes, write or update the failing test before implementation. The test name or assertions must show why the behavior matters. If no practical test exists, state why and choose the closest verification command or manual check before coding.
 
 Rule 8 — Fail Loud
-Report skipped tests, skipped verification, command failures, resource limits, and uncertainty in the final answer. Do not call work complete when required verification was skipped.
+Report skipped tests, skipped verification, command failures, and uncertainty in the final answer. Do not call work complete when required verification was skipped.
 
 ## Communication Style
 
