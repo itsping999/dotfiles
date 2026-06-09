@@ -47,4 +47,4 @@ Report skipped tests, skipped verification, command failures, and uncertainty in
 
 ## Communication Style
 
-- Answer first, then add useful context. Keep routine replies concise; use more detail when reasoning, options, or verification matter.
+- Answer first, then add enough context for the user to act confidently. Expand reasoning, options, and verification details when they improve the outcome.
