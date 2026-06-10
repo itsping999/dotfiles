@@ -63,14 +63,13 @@ bash ./pacman.sh
 - `.codex/AGENTS.md`: tracked global Codex instructions
 - `Brewfile`: macOS Homebrew package manifest
 - `bootstrap.sh`: syncs dotfiles into `$HOME`
-- `skills.sh`: syncs tracked shared Codex skills into `~/.codex/skills`; preserves local-only skills by default
 - `brew.sh`: macOS package bootstrap
 - `pacman.sh`: Arch package bootstrap
 
 ## Notes
 
 - `bootstrap.sh` excludes package manifests/scripts, README, Git metadata, CI metadata, tracked skills, and `.DS_Store`.
-- `skills.sh --delete` makes skill sync mirror the tracked directory by deleting local-only files, while preserving Codex system skill directories such as `.system/`.
+- `bootstrap.sh --delete-skills` makes skill sync mirror the tracked directory by deleting local-only files, while preserving Codex system skill directories such as `.system/`.
 - Shell `path`/`fpath` entries are de-duplicated by zsh.
 - Default editor is `vim`.
 

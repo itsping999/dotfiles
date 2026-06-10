@@ -5,10 +5,9 @@
 - Treat files here as source-of-truth for repeatable local setup. Live home-directory copies may drift, so inspect both sides before changing synced global Codex assets.
 
 ## Project Map
-- `bootstrap.sh` syncs normal dotfiles into `$HOME` with `rsync`. It excludes package scripts/manifests, Git metadata, `.agents/`, `.codex/skills/`, README, and `.DS_Store`. It also syncs `.codex/skills/` into `~/.codex/skills/` (no `--delete`): repo files overwrite local, new repo files are added, local-only files are preserved.
+- `bootstrap.sh` syncs dotfiles and shared Codex skills into `$HOME`. It excludes package scripts/manifests, Git metadata, `.agents/`, `.codex/skills/`, README, and `.DS_Store` from the main sync. It also syncs `.codex/skills/` into `~/.codex/skills/`: repo files overwrite local, new repo files are added, local-only files are preserved. Use `--delete-skills` for mirror mode.
 - `brew.sh` installs macOS packages from `Brewfile`; it also taps `farion1231/ccswitch` before running `brew bundle`.
 - `pacman.sh` installs the Arch Linux package array directly from that script and requires `yay`.
-- `skills.sh` syncs tracked shared skills from `.codex/skills/` into `~/.codex/skills/`; local-only skills are preserved unless `--delete` is used.
 - `.codex/AGENTS.md` is the dotfiles-tracked mirror of the live global Codex instructions, not the project-level instructions for this repo.
 - `.codex/skills/` contains tracked shared Codex skills. Each skill's `SKILL.md` is the entrypoint; templates, scripts, references, notices, and licenses under that skill directory travel with it.
 - Shell/editor config files such as `.zshrc`, `.vimrc`, `.tmux.conf`, `.gitconfig`, `.gitmessage`, and `.config/git/ignore` are copied to `$HOME` by `bootstrap.sh`.
@@ -22,9 +21,9 @@
 | Homebrew install behavior | `brew.sh` | Keep taps in the `taps` array and package declarations in `Brewfile`. |
 | Arch package list | `pacman.sh` | The `packages` array is the install list. The script exits if `yay` is missing. |
 | Dotfile sync exclusions | `bootstrap.sh` | Update `rsync_args` when adding repo files that should not be copied into `$HOME`. |
-| Shared skill sync | `bootstrap.sh`, `skills.sh`, and `.codex/skills/` | `bootstrap.sh` syncs skills without `--delete` (repo overwrites local, adds new, preserves local-only). `skills.sh` preserves local-only by default; `--delete` is an explicit mirror mode and still excludes system/runtime directories. |
+| Shared skill sync | `bootstrap.sh` and `.codex/skills/` | `bootstrap.sh` syncs skills without `--delete` by default (repo overwrites local, adds new, preserves local-only). Use `--delete-skills` for mirror mode, which still excludes `.system/` and `codex-primary-runtime/`. |
 | Global Codex instructions | `.codex/AGENTS.md` and `~/.codex/AGENTS.md` | Change both copies when updating global instructions, then verify parity. |
-| Tracked shared Codex skills | `.codex/skills/` and `~/.codex/skills/` | Change both live and tracked copies when maintaining shared skills, or edit tracked copy and run `bash ./skills.sh` to sync live. |
+| Tracked shared Codex skills | `.codex/skills/` and `~/.codex/skills/` | Change both live and tracked copies when maintaining shared skills, or edit tracked copy and run `bash ./bootstrap.sh --force` to sync live. |
 | Shell CI coverage | `.github/workflows/shell-checks.yml` | CI currently checks `bootstrap.sh`, `brew.sh`, and `pacman.sh`; update the workflow when adding another maintained shell script. |
 | Docker daemon config | `.docker/daemon.json` | Global daemon settings; `bootstrap.sh` syncs this into `~/.docker/daemon.json`. Restart Docker after changes. |
 | Docker image definitions | `dockerfiles/` | Docker image definitions; each subdirectory is a self-contained image build context with its own `Dockerfile`. |
@@ -35,13 +34,13 @@
 | --- | --- |
 | Preview dotfile sync | `bash ./bootstrap.sh --dry-run` |
 | Sync dotfiles with backup | `bash ./bootstrap.sh --force --backup` |
-| Preview skill sync | `bash ./skills.sh --dry-run` |
-| Sync tracked skills to live Codex | `bash ./skills.sh` |
+| Preview skill sync | `bash ./bootstrap.sh --dry-run` |
+| Sync tracked skills to live Codex | `bash ./bootstrap.sh --force` |
 | Check Brewfile without upgrades | `brew bundle check --no-upgrade --file Brewfile` |
 | Preview Homebrew actions | `bash ./brew.sh --dry-run` |
-| Shell syntax check | `bash -n bootstrap.sh brew.sh pacman.sh skills.sh` |
-| Shell lint | `shellcheck bootstrap.sh brew.sh pacman.sh skills.sh` |
-| Shell format check | `shfmt -d -i 4 -ci bootstrap.sh brew.sh pacman.sh skills.sh` |
+| Shell syntax check | `bash -n bootstrap.sh brew.sh pacman.sh` |
+| Shell lint | `shellcheck bootstrap.sh brew.sh pacman.sh` |
+| Shell format check | `shfmt -d -i 4 -ci bootstrap.sh brew.sh pacman.sh` |
 | Build cross-compile-builder image | `docker build -t cross-compile-builder ./dockerfiles/cross-compile-builder/` |
 | Build with specific Go version | `docker build --build-arg GO_VERSION=1.22.4 -t cross-compile-builder ./dockerfiles/cross-compile-builder/` |
 | Docker daemon config check | `docker info --format '{{.RegistryConfig.Mirrors}}'` |
@@ -61,8 +60,8 @@
 ### Maintain Shared Codex Skills
 1. Edit the specific skill directory under `.codex/skills/<skill-name>/`.
 2. Keep the skill self-contained: update `SKILL.md` plus any referenced `scripts/`, `templates/`, `references/`, `NOTICE`, or `LICENSE` files together.
-3. Sync live skills with `bash ./skills.sh` unless you deliberately edited `~/.codex/skills/` first; then reconcile the tracked mirror and verify the diff.
-4. Use `bash ./skills.sh --dry-run --delete` only to preview destructive mirror cleanup. Do not remove local-only or system skills unless the user explicitly asks.
+3. Sync live skills with `bash ./bootstrap.sh --force` unless you deliberately edited `~/.codex/skills/` first; then reconcile the tracked mirror and verify the diff.
+4. Use `bash ./bootstrap.sh --dry-run --delete-skills` only to preview destructive mirror cleanup. Do not remove local-only or system skills unless the user explicitly asks.
 
 ### Change Global Codex Instructions
 1. Edit both `~/.codex/AGENTS.md` and `.codex/AGENTS.md`, or edit one and copy it to the other.
@@ -83,7 +82,7 @@
 4. Restart Docker Desktop for changes to take effect. Verify mirrors with `docker info --format '{{.RegistryConfig.Mirrors}}'`.
 
 ## Verification
-- For shell script changes, run `shellcheck`, `bash -n`, and `shfmt -d -i 4 -ci` on the edited scripts. Include `skills.sh` in local checks even though current CI only checks `bootstrap.sh`, `brew.sh`, and `pacman.sh`.
+- For shell script changes, run `shellcheck`, `bash -n`, and `shfmt -d -i 4 -ci` on the edited scripts.
 - For package manifest changes, run `brew bundle check --no-upgrade --file Brewfile` on macOS. Use `bash ./brew.sh --dry-run` when `brew.sh` changes.
 - For sync-boundary changes, run the relevant `--dry-run` command and inspect the file list before applying.
 - For global instruction or shared-skill changes, verify live/tracked parity or run the sync command, then show the exact verification result.
@@ -91,7 +90,7 @@
 
 ## Common Pitfalls
 - Do not treat `.codex/AGENTS.md` as this repo's root agent guide; it is a tracked global-instruction mirror.
-- Do not rely on `bootstrap.sh` to sync shared skills. It explicitly excludes `.codex/skills/`; use `skills.sh`.
+- `bootstrap.sh` now syncs skills by default. Use `--delete-skills` for mirror mode; without it, local-only skills are preserved.
 - Do not use `brew list --formula` alone to decide what belongs in `Brewfile`; it includes dependencies.
 - Do not delete `~/.codex/skills/.system/` or runtime-provided skill directories during skill sync cleanup.
 - Keep shell script formatting aligned with CI: 4-space indentation and `shfmt -ci` for the checked scripts.

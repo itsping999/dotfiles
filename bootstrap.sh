@@ -5,18 +5,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN=false
 FORCE=false
 BACKUP=false
+DELETE_SKILLS=false
 
 usage() {
     cat <<'EOF'
-Usage: bootstrap.sh [--force] [--dry-run] [--backup]
+Usage: bootstrap.sh [--force] [--dry-run] [--backup] [--delete-skills]
 
-Sync dotfiles into $HOME.
+Sync dotfiles and shared Codex skills into $HOME.
 
 Options:
-  -f, --force     Skip confirmation
-  -n, --dry-run   Show files that would be synced without changing anything
-  -b, --backup    Back up overwritten files with a timestamp suffix
-  -h, --help      Show this help
+  -f, --force          Skip confirmation
+  -n, --dry-run        Show files that would be synced without changing anything
+  -b, --backup         Back up overwritten files with a timestamp suffix
+  --delete-skills      Delete files in ~/.codex/skills that are not tracked in this repo
+  -h, --help           Show this help
 EOF
 }
 
@@ -28,7 +30,6 @@ do_it() {
         --exclude ".codex/skills/"
         --exclude "dockerfiles/"
         --exclude "bootstrap.sh"
-        --exclude "skills.sh"
         --exclude "pacman.sh"
         --exclude "brew.sh"
         --exclude "Brewfile"
@@ -49,11 +50,22 @@ do_it() {
     fi
 
     rsync "${rsync_args[@]}" "$SCRIPT_DIR"/ "$HOME"/
-    # Sync .codex/skills/ into ~/.codex/skills/ (no --delete).
-    # Rules: repo files overwrite local, new repo files are added, local-only files are preserved.
+
+    # Sync .codex/skills/ into ~/.codex/skills/.
+    # Default: repo files overwrite local, new repo files are added, local-only files are preserved.
+    # With --delete: mirror mode, removes local-only files (except .system/ and codex-primary-runtime/).
     local skills_src="$SCRIPT_DIR/.codex/skills/"
     local skills_dst="$HOME/.codex/skills/"
-    local -a skills_rsync_args=(-avh --no-perms)
+    local -a skills_rsync_args=(
+        -avh
+        --no-perms
+        --exclude ".DS_Store"
+        --exclude "__pycache__/"
+        --exclude "*.pyc"
+        --exclude ".system/"
+        --exclude "codex-primary-runtime/"
+    )
+    [[ "$DELETE_SKILLS" == true ]] && skills_rsync_args+=(--delete)
     [[ "$DRY_RUN" == true ]] && skills_rsync_args+=(--dry-run)
     [[ "$BACKUP" == true ]] && skills_rsync_args+=(--backup --suffix=".bak-$(date +%Y%m%d%H%M%S)")
     mkdir -p "$skills_dst"
@@ -76,6 +88,9 @@ while (($#)); do
             ;;
         -b | --backup)
             BACKUP=true
+            ;;
+        --delete-skills)
+            DELETE_SKILLS=true
             ;;
         -h | --help)
             usage

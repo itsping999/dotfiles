@@ -48,7 +48,7 @@ When the user asks to add a new snippet (e.g. "把这个也加到 snippets 里")
    - Code block with minimal, runnable snippet (no testing boilerplate).
    - `### Pitfalls` subsection with non-obvious gotchas.
 3. **Update this SKILL.md**: add a row to the Reference Files table above.
-4. **Sync**: run `bash ~/dotfiles/skills.sh` to push changes to `~/.codex/skills/`.
+4. **Sync**: run `bash ~/dotfiles/bootstrap.sh --force` to push changes to `~/.codex/skills/`.
 
 ### Snippet Quality Bar
 
