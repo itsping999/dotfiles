@@ -5,7 +5,7 @@
 - Treat files here as source-of-truth for repeatable local setup. Live home-directory copies may drift, so inspect both sides before changing synced global Codex assets.
 
 ## Project Map
-- `bootstrap.sh` syncs normal dotfiles into `$HOME` with `rsync`. It excludes package scripts/manifests, Git metadata, `.agents/`, `.codex/skills/`, README, and `.DS_Store`.
+- `bootstrap.sh` syncs normal dotfiles into `$HOME` with `rsync`. It excludes package scripts/manifests, Git metadata, `.agents/`, `.codex/skills/`, README, and `.DS_Store`. It also syncs `.codex/skills/` into `~/.codex/skills/` (no `--delete`): repo files overwrite local, new repo files are added, local-only files are preserved.
 - `brew.sh` installs macOS packages from `Brewfile`; it also taps `farion1231/ccswitch` before running `brew bundle`.
 - `pacman.sh` installs the Arch Linux package array directly from that script and requires `yay`.
 - `skills.sh` syncs tracked shared skills from `.codex/skills/` into `~/.codex/skills/`; local-only skills are preserved unless `--delete` is used.
@@ -22,7 +22,7 @@
 | Homebrew install behavior | `brew.sh` | Keep taps in the `taps` array and package declarations in `Brewfile`. |
 | Arch package list | `pacman.sh` | The `packages` array is the install list. The script exits if `yay` is missing. |
 | Dotfile sync exclusions | `bootstrap.sh` | Update `rsync_args` when adding repo files that should not be copied into `$HOME`. |
-| Shared skill sync | `skills.sh` and `.codex/skills/` | Preserve local-only skills by default; `--delete` is an explicit mirror mode and still excludes system/runtime directories. |
+| Shared skill sync | `bootstrap.sh`, `skills.sh`, and `.codex/skills/` | `bootstrap.sh` syncs skills without `--delete` (repo overwrites local, adds new, preserves local-only). `skills.sh` preserves local-only by default; `--delete` is an explicit mirror mode and still excludes system/runtime directories. |
 | Global Codex instructions | `.codex/AGENTS.md` and `~/.codex/AGENTS.md` | Change both copies when updating global instructions, then verify parity. |
 | Tracked shared Codex skills | `.codex/skills/` and `~/.codex/skills/` | Change both live and tracked copies when maintaining shared skills, or edit tracked copy and run `bash ./skills.sh` to sync live. |
 | Shell CI coverage | `.github/workflows/shell-checks.yml` | CI currently checks `bootstrap.sh`, `brew.sh`, and `pacman.sh`; update the workflow when adding another maintained shell script. |

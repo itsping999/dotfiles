@@ -49,6 +49,15 @@ do_it() {
     fi
 
     rsync "${rsync_args[@]}" "$SCRIPT_DIR"/ "$HOME"/
+    # Sync .codex/skills/ into ~/.codex/skills/ (no --delete).
+    # Rules: repo files overwrite local, new repo files are added, local-only files are preserved.
+    local skills_src="$SCRIPT_DIR/.codex/skills/"
+    local skills_dst="$HOME/.codex/skills/"
+    local -a skills_rsync_args=(-avh --no-perms)
+    [[ "$DRY_RUN" == true ]] && skills_rsync_args+=(--dry-run)
+    [[ "$BACKUP" == true ]] && skills_rsync_args+=(--backup --suffix=".bak-$(date +%Y%m%d%H%M%S)")
+    mkdir -p "$skills_dst"
+    rsync "${skills_rsync_args[@]}" "$skills_src" "$skills_dst"
 
     if [[ "$DRY_RUN" == true ]]; then
         echo "dry run complete; no files changed"
