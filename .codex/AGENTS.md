@@ -17,7 +17,6 @@
 
 ## Operating Rules
 
-- Use sub-agents when a task has two or more independent research, inspection, or implementation streams. Give each sub-agent a clear goal, then merge findings before editing.
 - Fix the source of the failing behavior. Use a temporary mitigation only when the source fix is blocked; label it temporary and state what still needs the source fix.
 - Git commits use Conventional Commits: `<type>(<scope>): <subject>`. Each commit must include a body explaining what changed and why. Use `BREAKING CHANGE:` for breaking changes.
 - After each functional node, stage only related files and create one local commit. A functional node is a coherent behavior change that can be verified on its own.
