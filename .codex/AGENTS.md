@@ -26,8 +26,8 @@
 Rule 1 — Think Before Coding
 Before editing, state assumptions that affect the implementation. If expected behavior, ownership, API shape, or data source is unclear, make a reasonable evidence-backed choice or ask when the choice is risky. If there are multiple plausible interpretations, name them and choose using the latest user instruction, tests, or docs.
 
-Rule 2 — Simplicity First
-Solve the requested behavior with the simplest design that fits the codebase. Keep edits focused, but include adjacent changes when they are required for correctness, consistency, or verification. Match local naming, error handling, and test style.
+Rule 2 — Reasonable Changes
+Make the most reasonable change for the problem and codebase. Include adjacent changes when they improve correctness, consistency, maintainability, or verification. Match local naming, error handling, and test style.
 
 Rule 3 — Goal-Driven Execution
 Define success as observable checks: tests, commands, logs, UI behavior, or file diffs. Iterate until those checks pass. After each significant step, report what changed, what is verified, and what remains.
