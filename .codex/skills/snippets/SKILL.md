@@ -4,15 +4,16 @@ description: >
   Curated, battle-tested code snippets for third-party API integrations and
   infrastructure patterns. Use when implementing payment gateways (Alipay,
   WeChat Pay, ABC Bank), cloud services (Aliyun OSS, DirectMail), messaging
-  (WeChat Official Account templates), real-time communication (WebRTC),
-  cryptography (RSA signing, 3DES-CBC), or Redis data migration patterns.
+  (WeChat Official Account templates), translation APIs (Baidu Translate),
+  real-time communication (WebRTC), cryptography (RSA signing, 3DES-CBC), or
+  Redis data migration patterns.
   Also use when the user asks to add, update, or review integration snippets.
   Load the relevant reference file for the domain being worked on.
 ---
 
 # Snippets
 
-Verified Go integration snippets with pitfalls documented. Each reference file
+Verified integration snippets with pitfalls documented. Each reference file
 contains working code and a "Pitfalls" section for non-obvious gotchas.
 
 ## Reference Files
@@ -21,6 +22,7 @@ contains working code and a "Pitfalls" section for non-obvious gotchas.
 |--------|------|--------|
 | Payment | [go-payment.md](references/go-payment.md) | Alipay (App/Page/Precreate), WeChat Pay V3 (H5/App/Native), ABC Bank (PKCS12 + GBK + SHA1withRSA) |
 | Cloud | [go-aliyun.md](references/go-aliyun.md) | Aliyun OSS upload, DirectMail email sending |
+| Translation | [python-baidu-translate.md](references/python-baidu-translate.md) | Baidu Translate text API signing, QPS handling, multi-line requests |
 | Messaging | [go-wechat-mp.md](references/go-wechat-mp.md) | WeChat Official Account template message with miniprogram link |
 | Realtime | [go-webrtc.md](references/go-webrtc.md) | WebRTC DataChannel via gorilla/websocket signaling |
 | Crypto | [go-crypto.md](references/go-crypto.md) | 3DES-CBC decryption, RSA2048 signing (PKCS1/PKCS8) |
