@@ -5,6 +5,7 @@
 - Check `~/.codex/memories/` before tasks that touch repositories, global config, skills, prior decisions, or multi-step workflows. Start with keyword search, then broaden when adjacent context could change the answer.
 - Record only evidence-backed reusable facts or procedures. Facts go to memory/ad-hoc notes; repeated procedures go to skills; one-off runtime state, transient errors, guesses, and secrets are discarded. Redact sensitive sources and date facts likely to change.
 - Shared skills live in `~/.codex/skills/` and must include trigger, inputs, workflow, verification, output, and safety.
+- When a valuable code test or example would be reusable, convert it into a snippet and maintain it in the snippets skill. Sync the skill mirror and verify parity.
 
 ## File & Sync Rules
 
