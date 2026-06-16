@@ -10,7 +10,7 @@
 - `pacman.sh` installs the Arch Linux package array directly from that script and requires `yay`.
 - `.codex/AGENTS.md` is the dotfiles-tracked mirror of the live global Codex instructions, not the project-level instructions for this repo.
 - `.codex/skills/` contains tracked shared Codex skills. Each skill's `SKILL.md` is the entrypoint; templates, scripts, references, notices, and licenses under that skill directory travel with it.
-- Shell/editor config files such as `.zshrc`, `.vimrc`, `.tmux.conf`, `.gitconfig`, `.gitmessage`, and `.config/git/ignore` are copied to `$HOME` by `bootstrap.sh`.
+- Shell/editor config files such as `.zshrc`, `.vimrc`, `.tmux.conf`, `.gitconfig`, and `.config/git/ignore` are copied to `$HOME` by `bootstrap.sh`.
 - `.docker/daemon.json` is the global Docker daemon configuration with China mirror registries, BuildKit, log rotation, and address pool settings.
 - `dockerfiles/` is a directory in this repo that maintains Docker image definitions for build and packaging workflows. Each subdirectory contains a `Dockerfile` and its own `README.md`.
 

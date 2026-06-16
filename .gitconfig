@@ -31,10 +31,6 @@
     default = current
     followTags = true
 
-[commit]
-    template = ~/.gitmessage
-    # gpgSign = true
-
 [gc]
     auto = 256
 

@@ -27,8 +27,8 @@ packages=(
     unzip
     kubectl
     inetutils
-    podman
-    podman-compose
+    docker
+    docker-compose
     ffmpeg
     git-lfs
 )
