@@ -28,7 +28,6 @@ packages=(
     kubectl
     inetutils
     docker
-    docker-compose
     ffmpeg
     git-lfs
 )
