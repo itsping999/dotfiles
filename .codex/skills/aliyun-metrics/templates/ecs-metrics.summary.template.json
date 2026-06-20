@@ -49,16 +49,93 @@
       "cpu_cores": 2,
       "memory_mib": 4096,
       "metrics": {
-        "cpu": { "status": "ok", "samples": 958, "avg": "placeholder", "latest": "placeholder" },
-        "memory": { "status": "ok", "samples": 958, "avg": "placeholder", "latest": "placeholder" },
-        "disk": { "status": "ok", "samples": 958, "avg": "placeholder", "latest": "placeholder", "mountpoint": "/" },
-        "conn": { "status": "ok", "samples": 955, "avg": "placeholder", "latest": "placeholder" },
-        "extended": {
-          "DiskReadBPS": { "status": "ok/no_data", "samples": 958, "avg": "placeholder", "latest": "placeholder" },
-          "DiskWriteBPS": { "status": "ok/no_data", "samples": 958, "avg": "placeholder", "latest": "placeholder" },
-          "load_1m": { "status": "ok/no_data", "samples": 958, "avg": "placeholder", "latest": "placeholder" }
+        "cpu": {
+          "status": "ok",
+          "metric_name": "CPUUtilization",
+          "sample_count": 958,
+          "avg": 12.34,
+          "latest": 11.98,
+          "source": "ECS instance detail basic monitor"
+        },
+        "memory": {
+          "status": "no_data",
+          "metric_name": "memory_usedutilization",
+          "sample_count": 0,
+          "avg": null,
+          "latest": null,
+          "reason": "no_cloudmonitor_samples_for_weekly_window"
+        },
+        "disk": {
+          "status": "ok",
+          "metric_name": "diskusage_utilization",
+          "sample_count": 958,
+          "avg": 45.67,
+          "latest": 44.89,
+          "mountpoint": "/"
+        },
+        "conn": {
+          "status": "unavailable",
+          "metric_name": "concurrentConnections",
+          "avg": null
+        },
+        "network": {
+          "source": "ECS instance detail basic monitor",
+          "intranet_in_bps": {
+            "metric_name": "IntranetInRate",
+            "status": "ok",
+            "avg": 2587030.99,
+            "sample_count": 168
+          },
+          "intranet_out_bps": {
+            "metric_name": "IntranetOutRate",
+            "status": "ok",
+            "avg": 2100434.24,
+            "sample_count": 168
+          },
+          "public_in_bps": {
+            "metric_name": "VPC_PublicIP_InternetInRate",
+            "status": "ok",
+            "avg": 2588029.13,
+            "sample_count": 168
+          },
+          "public_out_bps": {
+            "metric_name": "VPC_PublicIP_InternetOutRate",
+            "status": "ok",
+            "avg": 2101557.95,
+            "sample_count": 168
+          }
+        },
+        "disk_io": {
+          "source": "ECS instance detail basic monitor",
+          "read_bps": {
+            "status": "ok",
+            "avg": 12345.67
+          },
+          "write_bps": {
+            "status": "ok",
+            "avg": 23456.78
+          },
+          "read_iops": {
+            "status": "ok",
+            "avg": 12
+          },
+          "write_iops": {
+            "status": "ok",
+            "avg": 23
+          }
         }
       }
     }
-  ]
+  ],
+  "collection_status": "complete|partial|incomplete|failed",
+  "consistency_check": {
+    "mode": "strict",
+    "scope_matches_invocation": true,
+    "same_scope_as_previous_period": true,
+    "missing_services": [],
+    "missing_regions": [],
+    "missing_instances": [],
+    "missing_metrics": [],
+    "notes": []
+  }
 }

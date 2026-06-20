@@ -38,6 +38,22 @@ AVAILABILITY_SCOPE_ALIASES = {
     "app": ("app", "应用", "应用可用率", "application"),
     "business": ("business", "平台业务", "业务", "平台业务可用率", "business"),
 }
+ALIYUN_SERVICE_LABELS = {
+    "ecs": "ECS",
+    "rds": "RDS",
+    "redis": "Redis",
+    "mongodb": "MongoDB",
+    "k8s": "K8S",
+    "slb": "SLB",
+    "cdn": "CDN",
+    "eip": "EIP",
+    "shared_traffic_package": "共享流量包",
+    "certificates": "证书",
+    "sms": "短信",
+    "voice": "语音",
+    "email": "邮件",
+}
+ALIYUN_COMPLETE_STATUS = {"complete", "ok"}
 
 
 def pick_field(payload: dict[str, Any], field_name: str) -> Any:
@@ -993,7 +1009,10 @@ def normalize_payload(
         else:
             record["ops_release"]["change_failure_rate"] = f"{cfr:.2f}%"
     else:
-        record["ops_release"]["change_failure_rate"] = "未填写"
+        if release_count_num is not None and release_count_num == 0 and (rollback_count_num is None or rollback_count_num == 0):
+            record["ops_release"]["change_failure_rate"] = "0%"
+        else:
+            record["ops_release"]["change_failure_rate"] = "未填写"
     monitor = record.get("monitoring_security") if isinstance(record.get("monitoring_security"), dict) else {}
     record["monitoring_security"] = {
         "effective_alerts": normalize_string(monitor.get("effective_alerts") or monitor.get("监控告警数量（有效）")),
@@ -1022,6 +1041,8 @@ def normalize_payload(
         week_start,
         week_end,
     )
+    quality = raw.get("aliyun_collection_quality")
+    record["aliyun_collection_quality"] = quality if isinstance(quality, dict) else {}
 
     record["week_start_date"] = week_start
     record["week_end_date"] = week_end
@@ -1062,6 +1083,12 @@ def build_summary_reasons(record: dict[str, Any]) -> list[str]:
         reasons.append(f"平台业务可用率 {record['availability_summary']['week']['business']}")
     if api_success is not None and api_success < 99.9:
         reasons.append(f"API 成功率 {record['traffic_metrics']['api_success_rate']}")
+    quality = record.get("aliyun_collection_quality") if isinstance(record.get("aliyun_collection_quality"), dict) else {}
+    blocking = quality.get("blocking_services") if isinstance(quality.get("blocking_services"), list) else []
+    if blocking:
+        labels = "、".join(normalize_string(item.get("label")) for item in blocking[:5] if isinstance(item, dict))
+        suffix = "等" if len(blocking) > 5 else ""
+        reasons.append(f"阿里云指标仍有 {len(blocking)} 项未完整采集（{labels}{suffix}）")
 
     return reasons or ["关键运行指标在目标范围内"]
 
@@ -1088,6 +1115,28 @@ def build_auto_highlights(record: dict[str, Any]) -> list[str]:
 
 def build_auto_risks(record: dict[str, Any]) -> list[str]:
     risks = list(record["key_risks"])
+
+    quality = record.get("aliyun_collection_quality") if isinstance(record.get("aliyun_collection_quality"), dict) else {}
+    blocking = quality.get("blocking_services") if isinstance(quality.get("blocking_services"), list) else []
+    if blocking:
+        parts: list[str] = []
+        for item in blocking[:6]:
+            if not isinstance(item, dict):
+                continue
+            label = normalize_string(item.get("label"))
+            status = normalize_string(item.get("status"))
+            missing = item.get("missing_metrics") if isinstance(item.get("missing_metrics"), list) else []
+            missing_text = "、".join(normalize_string(value) for value in missing[:3] if normalize_string(value))
+            if missing_text:
+                parts.append(f"{label}({status}: {missing_text})")
+            else:
+                parts.append(f"{label}({status})")
+        if parts:
+            risks.append(
+                "阿里云指标采集未达到正式完成口径："
+                + "；".join(parts)
+                + "。需补抓或解除登录态/权限阻塞后再作为正式周报交付。"
+            )
 
     cert_expiry = record["monitoring_security"]["cert_expiry"]
     has_manual_cert_risk = any("证书" in risk for risk in risks)
@@ -1269,12 +1318,70 @@ def collect_appendix_sources(data_root: Path, week_start: str, week_end: str) ->
         "eip": snapshot_files_within_week("eip", "eip-load."),
         "shared_traffic_package": matching_files("shared-traffic-package", "shared-traffic-package."),
         "certificates": snapshot_files_within_week("certificates", "certificate-expiry."),
+        "sms": matching_files("sms", "sms-usage."),
+        "voice": matching_files("voice", "voice-usage."),
+        "email": matching_files("email", "email-usage."),
     }
 
 
 def load_json(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8-sig") as file:
         return json.load(file)
+
+
+def load_aliyun_collection_quality(
+    data_root: Path,
+    week_start: date,
+    week_end: date,
+) -> dict[str, Any]:
+    sources = collect_appendix_sources(data_root, week_start.isoformat(), week_end.isoformat())
+    details: list[dict[str, Any]] = []
+    status_counts: dict[str, int] = {}
+
+    for service, label in ALIYUN_SERVICE_LABELS.items():
+        files = sources.get(service) or []
+        if not files:
+            status = "missing"
+            detail = {
+                "service": service,
+                "label": label,
+                "status": status,
+                "missing_metrics": ["output_file"],
+                "notes": ["未找到与当前周报周期对齐的阿里云指标文件"],
+                "file": "",
+            }
+        else:
+            path = files[-1]
+            payload = load_json(path)
+            status = normalize_string(payload.get("collection_status")).lower() or "unknown"
+            consistency = payload.get("consistency_check") if isinstance(payload.get("consistency_check"), dict) else {}
+            missing_metrics = consistency.get("missing_metrics") if isinstance(consistency.get("missing_metrics"), list) else []
+            notes = consistency.get("notes") if isinstance(consistency.get("notes"), list) else []
+            if not notes:
+                notes = payload.get("notes") if isinstance(payload.get("notes"), list) else []
+            detail = {
+                "service": service,
+                "label": label,
+                "status": status,
+                "missing_metrics": [normalize_string(item) for item in missing_metrics if normalize_string(item)],
+                "notes": [normalize_string(item) for item in notes if normalize_string(item)],
+                "file": path.name,
+            }
+
+        details.append(detail)
+        status_counts[status] = status_counts.get(status, 0) + 1
+
+    blocking = [
+        item
+        for item in details
+        if item["status"] not in ALIYUN_COMPLETE_STATUS
+    ]
+    return {
+        "status_counts": status_counts,
+        "details": details,
+        "blocking_services": blocking,
+        "complete": not blocking,
+    }
 
 
 def load_nginx_traffic_metrics(
@@ -1492,6 +1599,13 @@ def render_ecs_appendix(files: list[Path], report_path: Path) -> str:
             connections_avg = normalize_float(get_nested(metrics, "conn", "avg"))
             network_metrics = metrics.get("network") if isinstance(metrics, dict) else None
             disk_io_metrics = metrics.get("disk_io") if isinstance(metrics, dict) else None
+            net_in = format_bps_mbps(metric_average_any(get_nested(network_metrics, "public_in_bps"))) if isinstance(network_metrics, dict) else "/"
+            net_out = format_bps_mbps(metric_average_any(get_nested(network_metrics, "public_out_bps"))) if isinstance(network_metrics, dict) else "/"
+            net_bw = format_number(metric_average_any(get_nested(network_metrics, "public_out_bandwidth_percent")), "%") if isinstance(network_metrics, dict) else "/"
+            disk_read = format_bytes_per_second(metric_average_any(get_nested(disk_io_metrics, "read_bps"))) if isinstance(disk_io_metrics, dict) else "/"
+            disk_write = format_bytes_per_second(metric_average_any(get_nested(disk_io_metrics, "write_bps"))) if isinstance(disk_io_metrics, dict) else "/"
+            read_iops = format_number(metric_average_any(get_nested(disk_io_metrics, "read_iops"))) if isinstance(disk_io_metrics, dict) else "/"
+            write_iops = format_number(metric_average_any(get_nested(disk_io_metrics, "write_iops"))) if isinstance(disk_io_metrics, dict) else "/"
             rows.append(
                 [
                     f"{instance_name} / {instance_id}",
@@ -1501,22 +1615,15 @@ def render_ecs_appendix(files: list[Path], report_path: Path) -> str:
                     format_number(memory_avg, "%"),
                     format_number(disk_avg, "%"),
                     format_number(connections_avg),
+                    net_in,
+                    net_out,
+                    net_bw,
+                    disk_read,
+                    disk_write,
+                    read_iops,
+                    write_iops,
                 ]
             )
-            if isinstance(network_metrics, dict) or isinstance(disk_io_metrics, dict):
-                basic_monitor_rows.append(
-                    [
-                        f"{instance_name} / {instance_id}",
-                        region_id,
-                        format_bps_mbps(metric_average_any(get_nested(network_metrics, "public_in_bps"))),
-                        format_bps_mbps(metric_average_any(get_nested(network_metrics, "public_out_bps"))),
-                        format_number(metric_average_any(get_nested(network_metrics, "public_out_bandwidth_percent")), "%"),
-                        format_bytes_per_second(metric_average_any(get_nested(disk_io_metrics, "read_bps"))),
-                        format_bytes_per_second(metric_average_any(get_nested(disk_io_metrics, "write_bps"))),
-                        format_number(metric_average_any(get_nested(disk_io_metrics, "read_iops"))),
-                        format_number(metric_average_any(get_nested(disk_io_metrics, "write_iops"))),
-                    ]
-                )
             if cpu_avg is not None and cpu_avg >= 70:
                 guidance.append(
                     f"注意：{instance_name} 的 CPU 均值约 {format_number(cpu_avg, '%')}，已进入高位区间，建议优先复核该实例的热点进程、计划任务和上下游请求放量情况。"
@@ -1563,13 +1670,9 @@ def render_ecs_appendix(files: list[Path], report_path: Path) -> str:
 
         body_parts = [
             render_table(
-                ["实例", "地域", "状态", "CPU 平均", "内存平均", "磁盘平均", "连接数平均"],
+                ["实例", "地域", "状态", "CPU 平均", "内存平均", "磁盘平均", "连接数平均", "公网入平均", "公网出平均", "公网出带宽占用", "磁盘读平均", "磁盘写平均", "读 IOPS", "写 IOPS"],
                 rows,
             ),
-            render_table(
-                ["实例", "地域", "公网入平均", "公网出平均", "公网出带宽占用", "磁盘读平均", "磁盘写平均", "读 IOPS", "写 IOPS"],
-                basic_monitor_rows,
-            ) if basic_monitor_rows else "",
             "#### 重点观察\n\n" + render_bullets(observations[:6], "本周期暂无额外 ECS 观察结论。"),
             render_guidance(guidance, "建议持续关注高连接入口、磁盘高水位实例和停机实例清单。"),
         ]
@@ -1822,35 +1925,41 @@ def render_mongodb_appendix(files: list[Path], report_path: Path) -> str:
     for item in payload.get("instances", []):
         instance = item.get("instance", {})
         metrics = item.get("metrics", {})
-        current_connections = metric_average(metrics.get("current_connections"))
+        current_connections = metric_average(metrics.get("current_conn")) or metric_average(metrics.get("current_connections"))
         page_faults = metric_average(metrics.get("page_faults"))
-        query_ops = metric_average(metrics.get("query_ops_per_sec"))
-        update_ops = metric_average(metrics.get("update_ops_per_sec"))
+        query_ops = metric_average(metrics.get("qps")) or metric_average(metrics.get("query_ops_per_sec"))
+        update_ops = metric_average(metrics.get("num_requests")) or metric_average(metrics.get("update_ops_per_sec"))
+        cpu_avg = metric_average(metrics.get("cpu_usage_percent"))
+        memory_avg = metric_average(metrics.get("memory_usage_percent"))
+        disk_avg = metric_average(metrics.get("disk_usage_percent"))
         rows.append(
             [
                 f"{instance.get('name', '-') } / {instance.get('id', '-')}",
+                format_number(cpu_avg, "%"),
+                format_number(memory_avg, "%"),
+                format_number(disk_avg, "%"),
                 format_number(query_ops),
                 format_number(update_ops),
                 format_number(current_connections),
-                format_number(metric_average(metrics.get("network_requests"))),
                 format_number(page_faults),
             ]
         )
+        inst_display = instance.get('name') or instance.get('id') or '-'
         if current_connections is not None and current_connections >= 80:
             guidance.append(
-                f"注意：{instance.get('name', '-') } 的连接数长期维持在较高水平，建议检查连接池复用、空闲连接释放与驱动超时配置。"
+                f"注意：{inst_display} 的连接数长期维持在较高水平，建议检查连接池复用、空闲连接释放与驱动超时配置。"
             )
         if query_ops is not None and update_ops is not None and update_ops >= query_ops * 0.7:
             guidance.append(
-                f"建议：{instance.get('name', '-') } 的写入强度接近读取强度，建议关注主从复制延迟、热点集合与更新索引命中情况。"
+                f"建议：{inst_display} 的写入强度接近读取强度，建议关注主从复制延迟、热点集合与更新索引命中情况。"
             )
         if page_faults is not None and page_faults > 0:
             guidance.append(
-                f"改进：{instance.get('name', '-') } 已出现 page faults，需尽快核查工作集是否超出内存，以及磁盘读放大是否增加。"
+                f"改进：{inst_display} 已出现 page faults，需尽快核查工作集是否超出内存，以及磁盘读放大是否增加。"
             )
         if normalize_string(instance.get("role")) == "secondary":
             guidance.append(
-                f"注意：当前采样实例 {instance.get('name', '-') } 角色为 secondary，本节更适合作为副本节点负载参考，关键写入瓶颈仍需结合 primary 侧指标复核。"
+                f"注意：当前采样实例 {inst_display} 角色为 secondary，本节更适合作为副本节点负载参考，关键写入瓶颈仍需结合 primary 侧指标复核。"
             )
 
     notes = flatten_texts(payload.get("notes"))
@@ -1859,7 +1968,7 @@ def render_mongodb_appendix(files: list[Path], report_path: Path) -> str:
 
     body_parts = [
         render_table(
-            ["实例", "Query 平均", "Update 平均", "当前连接平均", "网络请求平均", "Page Faults 平均"],
+            ["实例", "CPU 平均", "内存平均", "磁盘平均", "QPS", "写 QPS", "连接数平均", "Page Faults 平均"],
             rows,
         ),
         "#### 重点观察\n\n" + render_bullets(filter_report_highlights(payload.get("report_highlights"))[:6], "本周期暂无额外 MongoDB 观察结论。"),
@@ -1873,35 +1982,27 @@ def render_slb_appendix(files: list[Path], report_path: Path) -> str:
         return render_component_block("5.5 SLB", [], ["- 未找到 SLB 资源盘点快照。"], report_path)
 
     payload = load_json(files[0])
-    classic = get_nested(payload, "families", "classic_slb") or {}
-    nlb = get_nested(payload, "families", "nlb") or {}
-    alb = get_nested(payload, "families", "alb") or {}
+    families_list = payload.get("families", [])
     guidance: list[str] = []
+    family_map = {f.get("family", "").upper(): f for f in families_list}
+    clb = family_map.get("CLB", {})
+    alb = family_map.get("ALB", {})
+    nlb = family_map.get("NLB", {})
+    gwlb = family_map.get("GWLB", {})
     family_rows = [
-        ["经典型 SLB", normalize_string(classic.get("total_count")) or "/", normalize_string(classic.get("running_count")) or "/", normalize_string(get_nested(payload, "idle_risk", "classic_slb_idle_count")) or "/"],
-        ["NLB", normalize_string(nlb.get("total_count")) or "/", normalize_string(nlb.get("running_count")) or "/", "/"],
-        ["ALB", normalize_string(alb.get("total_count")) or "/", normalize_string(alb.get("status")) or "/", "/"],
+        ["经典型 SLB", normalize_string(clb.get("count")) or "/", normalize_string(clb.get("running")) or "/", normalize_string(clb.get("idle")) or "0"],
+        ["ALB", normalize_string(alb.get("count")) or "/", normalize_string(alb.get("running")) or "/", "/"],
+        ["NLB", normalize_string(nlb.get("count")) or "/", normalize_string(nlb.get("running")) or "/", "/"],
+        ["GWLB", normalize_string(gwlb.get("count")) or "/", normalize_string(gwlb.get("running")) or "/", "/"],
     ]
-    region_rows = [
-        [
-            normalize_string(item.get("region_id")) or "-",
-            normalize_string(item.get("instance_count")) or "-",
-            normalize_string(item.get("running_count")) or "-",
-        ]
-        for item in classic.get("regions", [])
-    ]
-    if normalize_string(classic.get("total_count")) and classic.get("total_count", 0) > 0:
+    region_rows = []  # per-instance region data not available in current SLB snapshot
+    if clb.get("count", 0) > 0:
         guidance.append("建议：当前负载均衡仍以经典型 SLB 为主，建议梳理是否有入口适合逐步迁移到 ALB/NLB，以便获得更细粒度的七层治理与弹性能力。")
-    if get_nested(payload, "idle_risk", "classic_slb_idle_count") == 0:
+    if clb.get("idle", 0) == 0:
         guidance.append("注意：本次未发现闲置 SLB，资源利用率整体健康，但仍建议按季度复核监听、后端服务器组和证书绑定是否与现网一致。")
-    if normalize_string(alb.get("status")) == "not_returned_by_overview_api":
-        guidance.append("改进：ALB 概览接口本次未返回实例计数，建议后续补一条独立盘点链路，避免 ALB 资源遗漏在周报视图之外。")
-    if classic.get("total_count", 0) >= 1 and len(region_rows) > 1:
-        guidance.append("注意：当前负载均衡已分布在多个地域，建议同步维护地域到业务的映射关系，避免故障排查时只关注单地域。")
 
     body_parts = [
         render_table(["负载均衡类型", "总数", "运行中", "闲置数"], family_rows),
-        render_table(["地域", "实例数", "运行中"], region_rows),
         "#### 重点观察\n\n" + render_bullets(filter_report_highlights(payload.get("report_highlights"))[:6], "当前暂无额外 SLB 观察结论。"),
         render_guidance(guidance, "建议保持负载均衡资源盘点与监听配置核对的周期性动作。"),
     ]
@@ -1925,7 +2026,60 @@ def cdn_remaining_ratio_value(item: dict[str, Any]) -> float | None:
     return extract_first_number(ratio)
 
 
-def render_cdn_appendix(files: list[Path], report_path: Path) -> str:
+
+
+def _load_dcdn_packages_by_region(data_root: Path, week_start: str, week_end: str) -> dict[str, dict]:
+    """Load DCDN resource package remaining data from shared-traffic-package files."""
+    stp_dir = data_root / "shared-traffic-package"
+    if not stp_dir.exists():
+        return {}
+    # Map DCDN template region names to CDN console region labels
+    dcdn_to_cdn_region = {
+        "中国大陆": "中国大陆",
+        "亚太1": "亚太1区",
+        "亚太2": "亚太2区",
+        "亚太3": "亚太3区",
+        "欧洲": "欧洲",
+        "北美": "北美",
+        "南美": "南美",
+    }
+    result: dict[str, dict] = {}  # region_label -> {total_tb, remaining_tb, count}
+    for path in sorted(stp_dir.glob("shared-traffic-package.*.json")):
+        payload = load_json(path)
+        tw = payload.get("time_window", {})
+        if tw.get("start", "")[:10] > week_end or tw.get("end", "")[:10] < week_start:
+            continue
+        items = get_nested(payload, "aggregate_metrics", "dcdn_remaining_by_package", "items") or []
+        for item in items:
+            template = normalize_string(item.get("template_name")) or ""
+            # Extract region from template name like "边缘安全加速资源包(全站加速) 下行流量（中国大陆）"
+            region_key = None
+            for dcdn_region, cdn_label in dcdn_to_cdn_region.items():
+                if dcdn_region in template:
+                    region_key = cdn_label
+                    break
+            if not region_key:
+                continue
+            total_val = normalize_float(item.get("total_value"))
+            remaining_val = normalize_float(item.get("remaining_value"))
+            total_unit = normalize_string(item.get("total_unit")) or "TB"
+            remaining_unit = normalize_string(item.get("remaining_unit")) or "TB"
+            # Convert to TB
+            if total_unit == "GB":
+                total_val = total_val / 1024 if total_val else None
+            if remaining_unit == "GB":
+                remaining_val = remaining_val / 1024 if remaining_val else None
+            if region_key not in result:
+                result[region_key] = {"total_tb": 0.0, "remaining_tb": 0.0, "count": 0}
+            if total_val:
+                result[region_key]["total_tb"] += total_val
+            if remaining_val:
+                result[region_key]["remaining_tb"] += remaining_val
+            result[region_key]["count"] += 1
+    return result
+
+
+def render_cdn_appendix(files: list[Path], report_path: Path, data_root: Path = None, week_start: str = '', week_end: str = '') -> str:
     if not files:
         return render_component_block("5.6 CDN", [], ["- 未找到 CDN 资源包与带宽快照。"], report_path)
 
@@ -1961,6 +2115,27 @@ def render_cdn_appendix(files: list[Path], report_path: Path) -> str:
         ]
         for item in usage.get("package_usage_by_region", [])
     ]
+    # Enrich with DCDN resource package data from shared-traffic-package
+    if data_root:
+        dcdn_by_region = _load_dcdn_packages_by_region(data_root, week_start, week_end)
+        enriched_rows = []
+        for row in package_rows:
+            region_label = row[1]  # second column is region
+            if region_label in dcdn_by_region:
+                pkg = dcdn_by_region[region_label]
+                total_display = f"{pkg['total_tb']:.2f} TB" if pkg['total_tb'] > 0 else "/"
+                remaining_display = f"{pkg['remaining_tb']:.2f} TB" if pkg['remaining_tb'] > 0 else "/"
+                ratio = (pkg['remaining_tb'] / pkg['total_tb'] * 100) if pkg['total_tb'] > 0 else None
+                ratio_display = f"{ratio:.2f}%" if ratio is not None else "/"
+                count_display = str(pkg['count'])
+                # Update: package_total, package_remaining, package_remaining_ratio, deductible_package_count
+                row[2] = total_display   # 资源包总量
+                row[4] = remaining_display  # 剩余量
+                row[5] = ratio_display   # 剩余占比
+                row[6] = count_display   # 可抵扣资源包
+            enriched_rows.append(row)
+        package_rows = enriched_rows
+
     postpaid_regions = [
         normalize_string(item.get("region_label"))
         for item in usage.get("package_usage_by_region", [])
@@ -2056,73 +2231,97 @@ def render_eip_appendix(files: list[Path], report_path: Path) -> str:
 
 def render_shared_traffic_package_appendix(files: list[Path], report_path: Path) -> str:
     if not files:
-        return render_component_block("5.8 共享流量包", [], ["- 未找到共享流量包或 NAT 网关资源包抵扣日志。"], report_path)
+        return render_component_block("5.8 共享流量包", [], ["- 未找到共享流量包或 NAT 网关资源包数据。"], report_path)
 
     payload = load_json(files[0])
     aggregate = payload.get("aggregate_metrics", {})
     guidance: list[str] = []
 
-    summary_rows = [[
-        normalize_string(aggregate.get("shared_flowbag_log_count")) or "/",
-        format_number(normalize_float(aggregate.get("shared_flowbag_total_deduct_gb")), " GB", 2),
-        format_number(normalize_float(aggregate.get("shared_flowbag_latest_remaining_gb")), " GB", 2),
-        normalize_string(aggregate.get("nat_cu_log_count")) or "/",
-        format_number(normalize_float(aggregate.get("nat_cu_total_deduct_cu")), " CU", 2),
-        format_number(normalize_float(aggregate.get("nat_cu_latest_remaining_cu")), " CU", 2),
-    ]]
+    # Build package list: shared flowbag + NAT packages
+    pkg_rows: list[list[str]] = []
+    flowbag_data = aggregate.get("shared_flowbag_remaining_by_package", {})
+    nat_data = aggregate.get("nat_cu_remaining_by_package", {})
 
-    flow_rows = [
-        [
+    for item in (flowbag_data.get("items") or []):
+        remaining = normalize_float(item.get("remaining_value"))
+        total = normalize_float(item.get("total_value"))
+        unit = normalize_string(item.get("remaining_unit")) or "TB"
+        pkg_rows.append([
+            "共享流量包",
             normalize_string(item.get("template_name")) or "-",
-            normalize_string(item.get("billing_commodity_name")) or "-",
-            normalize_string(item.get("billing_instance_id")) or "-",
-            normalize_string(item.get("capacity_deducted")) or "/",
-            normalize_string(item.get("capacity_after_deduct")) or "/",
-            normalize_string(item.get("deduct_time")) or "/",
-        ]
-        for item in payload.get("shared_flowbag_logs", [])[:10]
-    ]
-    nat_rows = [
-        [
+            normalize_string(item.get("instance_id")) or "-",
+            f"{total:.2f} {unit}" if total else "/",
+            f"{remaining:.2f} {unit}" if remaining else "/",
+            normalize_string(item.get("valid_to"))[:10] if item.get("valid_to") else "/",
+        ])
+
+    for item in (nat_data.get("items") or []):
+        remaining = normalize_float(item.get("remaining_value"))
+        total = normalize_float(item.get("total_value"))
+        unit = normalize_string(item.get("remaining_unit")) or "CU"
+        pkg_rows.append([
+            "NAT 网关资源包",
             normalize_string(item.get("template_name")) or "-",
-            normalize_string(item.get("billing_price_field_name")) or "-",
-            normalize_string(item.get("billing_instance_id")) or "-",
-            normalize_string(item.get("capacity_deducted")) or "/",
-            normalize_string(item.get("capacity_after_deduct")) or "/",
-            normalize_string(item.get("deduct_time")) or "/",
-        ]
-        for item in payload.get("nat_cu_logs", [])[:10]
-    ]
+            normalize_string(item.get("instance_id")) or "-",
+            f"{total:.2f} {unit}" if total else "/",
+            f"{remaining:.2f} {unit}" if remaining else "/",
+            normalize_string(item.get("valid_to"))[:10] if item.get("valid_to") else "/",
+        ])
 
-    shared_gb = normalize_float(aggregate.get("shared_flowbag_total_deduct_gb"))
-    shared_remaining = normalize_float(aggregate.get("shared_flowbag_latest_remaining_gb"))
-    nat_cu = normalize_float(aggregate.get("nat_cu_total_deduct_cu"))
-    nat_remaining = normalize_float(aggregate.get("nat_cu_latest_remaining_cu"))
-    commodity_dist = aggregate.get("billing_commodity_distribution") or {}
-
-    if shared_gb is not None and shared_gb >= 1:
-        guidance.append(f"注意：本周期共享流量包已抵扣约 {shared_gb:.2f} GB 公网流出流量，建议继续跟踪周度消耗增速，避免高峰期超出资源包覆盖。")
-    if shared_remaining is not None and shared_remaining <= 700:
-        guidance.append(f"建议：共享流量包剩余量约 {shared_remaining:.2f} GB，建议与 EIP / CDN / 跨地域入口一起评估下周是否需要补购或分流。")
-    if nat_cu is not None and nat_cu > 0:
-        guidance.append(f"注意：本周期 NAT 网关资源包已抵扣约 {nat_cu:.2f} CU，建议持续观察 NAT 网关容量单位与实例费抵扣是否同步增长。")
-    if nat_remaining is not None and nat_remaining <= 230:
-        guidance.append(f"改进：NAT 网关资源包剩余约 {nat_remaining:.2f} CU，建议提前校验资源包续购计划，避免公网出口容量费用波动。")
-    if commodity_dist:
-        top_targets = "、".join(
-            f"{name}:{count}"
-            for name, count in sorted(commodity_dist.items(), key=lambda item: item[1], reverse=True)[:3]
-        )
-        guidance.append(f"建议：本周期资源包抵扣主要覆盖 {top_targets}，建议将共享流量包与公网入口责任链路一并维护。")
+    # Guidance based on remaining amounts
+    flowbag_remaining_tb = normalize_float(flowbag_data.get("total_remaining_tb"))
+    if flowbag_remaining_tb is not None and flowbag_remaining_tb <= 5:
+        guidance.append(f"建议：共享流量包总余量约 {flowbag_remaining_tb:.2f} TB，建议评估下周是否需要补购。")
+    for item in (flowbag_data.get("items") or []):
+        remaining = normalize_float(item.get("remaining_value"))
+        total = normalize_float(item.get("total_value"))
+        if remaining is not None and total is not None and total > 0 and remaining / total <= 0.15:
+            guidance.append(f"注意：{item.get('template_name', '-')}（{item.get('instance_id', '-')}）剩余不足 15%，建议关注。")
 
     body_parts = [
-        render_table(["共享流量日志数", "共享流量抵扣总量", "共享流量包剩余", "NAT 日志数", "NAT 抵扣总量", "NAT 资源包剩余"], summary_rows),
-        render_table(["资源包类型", "被抵扣商品", "被抵扣实例ID", "本次抵扣量", "抵扣后剩余", "抵扣时间"], flow_rows),
-        render_table(["资源包类型", "被抵扣计费项", "被抵扣实例ID", "本次抵扣量", "抵扣后剩余", "抵扣时间"], nat_rows),
+        render_table(["资源包类型", "模板", "实例 ID", "总量", "剩余量", "有效期至"], pkg_rows),
         "#### 重点观察\n\n" + render_bullets(filter_report_highlights(payload.get("report_highlights"))[:6], "当前暂无额外共享流量包观察结论。"),
-        render_guidance(guidance, "建议持续跟踪共享流量包、NAT 网关资源包与公网出口流量之间的关系。"),
+        render_guidance(guidance, "建议持续跟踪共享流量包与 NAT 网关资源包的消耗趋势。"),
     ]
     return render_component_block("5.8 共享流量包", files, body_parts, report_path)
+
+
+def render_aliyun_collection_quality(record: dict[str, Any], report_path: Path) -> str:
+    quality = record.get("aliyun_collection_quality") if isinstance(record.get("aliyun_collection_quality"), dict) else {}
+    details = quality.get("details") if isinstance(quality.get("details"), list) else []
+    if not details:
+        return render_component_block(
+            "5.9 阿里云采集完整性",
+            [],
+            ["- 未生成阿里云采集完整性摘要。"],
+            report_path,
+        )
+
+    rows: list[list[str]] = []
+    blocking_labels: list[str] = []
+    for item in details:
+        if not isinstance(item, dict):
+            continue
+        label = normalize_string(item.get("label"))
+        status = normalize_string(item.get("status")) or "unknown"
+        missing = item.get("missing_metrics") if isinstance(item.get("missing_metrics"), list) else []
+        notes = item.get("notes") if isinstance(item.get("notes"), list) else []
+        missing_text = "、".join(normalize_string(value) for value in missing[:4] if normalize_string(value)) or "-"
+        note_text = "；".join(normalize_string(value) for value in notes[:2] if normalize_string(value)) or "-"
+        rows.append([label, status, missing_text, note_text])
+        if status.lower() not in ALIYUN_COMPLETE_STATUS:
+            blocking_labels.append(label)
+
+    if blocking_labels:
+        summary = f"- 当前阿里云数据仍为阶段性采集结果，未完整项：{'、'.join(blocking_labels)}。"
+    else:
+        summary = "- 当前阿里云数据采集状态均为 complete。"
+
+    body_parts = [
+        summary,
+        render_table(["服务", "采集状态", "缺失指标/API", "说明"], rows),
+    ]
+    return render_component_block("5.9 阿里云采集完整性", [], body_parts, report_path)
 
 
 def render_appendix_sections(record: dict[str, Any], data_root: Path, report_path: Path) -> str:
@@ -2133,7 +2332,7 @@ def render_appendix_sections(record: dict[str, Any], data_root: Path, report_pat
         render_redis_appendix(sources["redis"], report_path),
         render_mongodb_appendix(sources["mongodb"], report_path),
         render_slb_appendix(sources["slb"], report_path),
-        render_cdn_appendix(sources["cdn"], report_path),
+        render_cdn_appendix(sources["cdn"], report_path, data_root, record["week_start"], record["week_end"]),
         render_eip_appendix(sources["eip"], report_path),
         render_shared_traffic_package_appendix(sources["shared_traffic_package"], report_path),
     ]
@@ -2445,6 +2644,23 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    def _validate_data_root(root: Path, week_start: str | None, week_end: str | None) -> None:
+        import importlib, sys
+        script_dir = str(Path('.codex/skills/aliyun-metrics/scripts').resolve())
+        if script_dir not in sys.path:
+            sys.path.insert(0, script_dir)
+        module = importlib.import_module('validate_aliyun_metrics')
+        services = ['ecs','rds','redis','mongodb','k8s','slb','cdn','eip','shared_traffic_package','certificates','sms','voice','email']
+        reports = module.run_validate(root, services, module.parse_date(week_start) if week_start else None, module.parse_date(week_end) if week_end else None)
+        errors = [issue for report in reports for issue in report.issues]
+        warnings = [issue for report in reports for issue in report.warnings]
+        if warnings:
+            print(f'aliyun-metrics 校验发现 {len(warnings)} 条告警，继续生成周报。')
+        if errors:
+            print(f'aliyun-metrics 校验发现 {len(errors)} 条错误，阻断生成。')
+            raise SystemExit(1)
+
+
     if not args.input and (not args.week_start or not args.week_end):
         parser.error("未提供 --input 时，必须同时传入 --week-start 和 --week-end")
 
@@ -2463,6 +2679,7 @@ def main() -> None:
     week_start_text = normalize_string(args.week_start) or normalize_string(pick_field(raw, "week_start"))
     week_end_text = normalize_string(args.week_end) or normalize_string(pick_field(raw, "week_end"))
     if week_start_text and week_end_text:
+        _validate_data_root(Path(args.data_root), week_start_text, week_end_text)
         nginx_metrics = load_nginx_traffic_metrics(
             Path(args.nginx_root),
             parse_date(week_start_text),
@@ -2480,6 +2697,11 @@ def main() -> None:
         if certificate_summary:
             existing_monitor = raw.get("monitoring_security") if isinstance(raw.get("monitoring_security"), dict) else {}
             raw["monitoring_security"] = merge_dict_prefer_existing(certificate_summary, existing_monitor)
+        raw["aliyun_collection_quality"] = load_aliyun_collection_quality(
+            data_root,
+            parse_date(week_start_text),
+            parse_date(week_end_text),
+        )
     record = normalize_payload(
         raw,
         incidents_dir,
