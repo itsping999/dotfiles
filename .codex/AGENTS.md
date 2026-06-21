@@ -24,26 +24,89 @@
 
 ## Engineering Rules
 
-Rule 1 — Think Before Coding
-Before editing, state assumptions that affect the implementation. If expected behavior, ownership, API shape, or data source is unclear, make a reasonable evidence-backed choice or ask when the choice is risky. If there are multiple plausible interpretations, name them and choose using the latest user instruction, tests, or docs.
+# 01 — Karpathy Core
 
-Rule 2 — Reasonable Changes
-Make the most reasonable change for the problem and codebase. Include adjacent changes when they improve correctness, consistency, maintainability, or verification. Match local naming, error handling, and test style.
+Behavioral guidelines to reduce common LLM coding mistakes.
+Adapted from Andrej Karpathy's observations. Soft recommendations — apply
+judgment for trivial tasks (typo fixes, obvious one-liners).
 
-Rule 3 — Goal-Driven Execution
-Define success as observable checks: tests, commands, logs, UI behavior, or file diffs. Iterate until those checks pass. After each significant step, report what changed, what is verified, and what remains.
+These principles bias toward **caution over speed**. They are designed to
+reduce costly mistakes on non-trivial work, not to slow down simple tasks.
 
-Rule 4 — Surface Conflicts
-When instructions, patterns, or tests conflict, choose one source of truth in this order: latest user instruction, passing tests, current docs, nearest caller. State the choice and flag the other pattern as cleanup work.
+---
 
-Rule 5 — Read Before You Write
-Before changing exported behavior, read the export, immediate callers, existing tests, and shared utilities. If the structure still does not make sense, ask before editing.
+## 1. Think Before Coding
 
-Rule 6 — Test Meaningfully
-For feature work and bug fixes, add or update tests that encode the intended behavior. Prefer writing the failing test before implementation when practical. If no practical test exists, state why and choose the closest verification command or manual check.
+*Don't assume. Don't hide confusion. Surface tradeoffs.*
 
-Rule 7 — Fail Loud
-Report skipped tests, skipped verification, command failures, and uncertainty in the final answer. Do not call work complete when required verification was skipped.
+Before implementing:
+
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+*Minimum code that solves the problem. Nothing speculative.*
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- Before writing a long solution, check if a short one would suffice.
+  Don't write 200 lines if 50 would do — but also don't rewrite working
+  code retroactively just to shorten it.
+
+Self-check: "Would a senior engineer say this is overcomplicated?"
+If yes, simplify before submitting.
+
+## 3. Surgical Changes
+
+*Touch only what you must. Clean up only your own mess.*
+
+When editing existing code:
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style. If a linter/formatter is configured, defer to it.
+  If style is unenforced, match the existing pattern unless it violates
+  the linter.
+- If you notice unrelated dead code, mention it — don't delete it.
+
+When your changes create orphans:
+
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+*Define success criteria. Loop until verified.*
+
+Transform tasks into verifiable goals:
+
+- "Add validation" → "Write tests for invalid inputs, then make them pass."
+- "Fix the bug" → "Write a test that reproduces it, then make it pass."
+- "Refactor X" → "Ensure tests pass before and after."
+
+For multi-step tasks, state a brief plan:
+
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria allow independent loops. Weak criteria
+("make it work") require constant clarification.
+
+---
+
+**Working signs:** fewer unnecessary changes in diffs, fewer rewrites
+due to overcomplication, clarifying questions before implementation
+rather than after mistakes.
 
 ## Communication Style
 
