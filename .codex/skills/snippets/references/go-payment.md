@@ -9,6 +9,7 @@
   - [H5 Prepay](#h5-prepay)
   - [App Prepay](#app-prepay)
   - [Native Prepay](#native-prepay)
+  - [Notify Callback Handler](#notify-callback-handler)
   - [Notification Decryption Structure](#notification-decryption-structure)
 - [ABC Bank (农行)](#abc-bank-农行)
   - [Sign Request (PKCS12 + SHA1withRSA)](#sign-request)
@@ -176,7 +177,7 @@ func generateRSA2048Signature(s string, privateKey string) (string, error) {
 
 ## WeChat Pay V3
 
-> last_verified: 2025-06 | sdk: github.com/wechatpay-apiv3/wechatpay-go
+> last_verified: 2026-06 | sdk: github.com/wechatpay-apiv3/wechatpay-go@v0.2.20
 
 ### H5 Prepay
 
@@ -248,6 +249,91 @@ resp, result, _ := svc.Prepay(context.Background(), native.PrepayRequest{
 })
 ```
 
+### Notify Callback Handler
+
+Use when the service only needs to verify and decrypt WeChat Pay V3 callback
+notifications, without creating a full `core.Client`.
+
+```go
+import (
+    "context"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
+
+    "github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
+    "github.com/wechatpay-apiv3/wechatpay-go/core/downloader"
+    "github.com/wechatpay-apiv3/wechatpay-go/core/notify"
+    "github.com/wechatpay-apiv3/wechatpay-go/services/payments"
+    "github.com/wechatpay-apiv3/wechatpay-go/utils"
+)
+
+func newWechatPayNotifyHandler(ctx context.Context) (*notify.Handler, error) {
+    merchantID := os.Getenv("WECHAT_PAY_MCH_ID")
+    merchantSerial := os.Getenv("WECHAT_PAY_MCH_CERTIFICATE_SERIAL_NUMBER")
+    apiV3Key := os.Getenv("WECHAT_PAY_MCH_API_V3_KEY")
+    privateKeyPath := os.Getenv("WECHAT_PAY_PRIVATE_KEY_PATH")
+
+    privateKey, err := utils.LoadPrivateKeyWithPath(privateKeyPath)
+    if err != nil {
+        return nil, fmt.Errorf("load merchant private key: %w", err)
+    }
+
+    err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(
+        ctx,
+        privateKey,
+        merchantSerial,
+        merchantID,
+        apiV3Key,
+    )
+    if err != nil {
+        return nil, fmt.Errorf("register certificate downloader: %w", err)
+    }
+
+    certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(merchantID)
+    return notify.NewNotifyHandler(
+        apiV3Key,
+        verifiers.NewSHA256WithRSAVerifier(certificateVisitor),
+    ), nil
+}
+
+func wechatPayNotifyHTTPHandler(handler *notify.Handler) http.HandlerFunc {
+    return func(responseWriter http.ResponseWriter, request *http.Request) {
+        transaction := new(payments.Transaction)
+        notifyRequest, err := handler.ParseNotifyRequest(request.Context(), request, transaction)
+        if err != nil {
+            log.Printf("wechat pay notify parse failed: %v", err)
+            http.Error(responseWriter, "invalid notify", http.StatusBadRequest)
+            return
+        }
+
+        log.Printf("wechat pay notify ok: summary=%s transaction_id=%v", notifyRequest.Summary, transaction.TransactionId)
+        responseWriter.WriteHeader(http.StatusOK)
+        _, _ = responseWriter.Write([]byte("success"))
+    }
+}
+
+func main() {
+    handler, err := newWechatPayNotifyHandler(context.Background())
+    if err != nil {
+        log.Fatalf("wechat pay notify handler init failed: %v", err)
+    }
+    http.HandleFunc("/api/v1/wechatpay/notify", wechatPayNotifyHTTPHandler(handler))
+    log.Fatal(http.ListenAndServe(":8080", nil))
+}
+```
+
+#### Pitfalls
+- Do not read `request.Body` before `ParseNotifyRequest`; it is an `io.Reader`
+  and signature verification will fail after the body has been consumed.
+- Register the certificate downloader during service startup. Re-registering on
+  every callback is unnecessary and can add avoidable latency/failure points.
+- Keep `WECHAT_PAY_MCH_API_V3_KEY`, merchant ID, serial number, and private key
+  path in env/config. Do not hardcode them in callback code or snippets.
+- Return HTTP 200 with body `success` only after signature verification,
+  decryption, and idempotent business processing succeed.
+
 ### Notification Decryption Structure
 
 ```go
@@ -271,6 +357,9 @@ type WechatPayNotification struct {
 - WeChat Pay V3 uses **AEAD_AES_256_GCM** for notification decryption, not RSA.
 - `NotifyUrl` must be HTTPS and publicly accessible for production.
 - The `apiKey` (APIv3 key) is different from the merchant private key.
+- For standard transaction callbacks, parse decrypted content into
+  `payments.Transaction`; use a custom struct or `map[string]any` only when the
+  SDK has no matching model.
 
 ---
 

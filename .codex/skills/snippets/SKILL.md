@@ -20,7 +20,7 @@ contains working code and a "Pitfalls" section for non-obvious gotchas.
 
 | Domain | File | Covers |
 |--------|------|--------|
-| Payment | [go-payment.md](references/go-payment.md) | Alipay (App/Page/Precreate), WeChat Pay V3 (H5/App/Native), ABC Bank (PKCS12 + GBK + SHA1withRSA) |
+| Payment | [go-payment.md](references/go-payment.md) | Alipay (App/Page/Precreate), WeChat Pay V3 (H5/App/Native/Notify callback), ABC Bank (PKCS12 + GBK + SHA1withRSA) |
 | Cloud | [go-aliyun.md](references/go-aliyun.md) | Aliyun OSS upload, DirectMail email sending |
 | Translation | [python-baidu-translate.md](references/python-baidu-translate.md) | Baidu Translate text API signing, QPS handling, multi-line requests |
 | Messaging | [go-wechat-mp.md](references/go-wechat-mp.md) | WeChat Official Account template message with miniprogram link |
