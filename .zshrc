@@ -2,6 +2,7 @@ typeset -U path fpath
 
 path=("$HOME/.local/bin" $path)
 export PATH
+export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
 fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 autoload -Uz compinit
 compinit -u
