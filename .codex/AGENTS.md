@@ -1,17 +1,17 @@
 # Global Codex Instructions
 
-## Memory & Learning
+## Knowledge & Learning
 
-- Check `~/.codex/memories/` before tasks that touch repositories, global config, skills, prior decisions, or multi-step workflows. Start with keyword search, then broaden when adjacent context could change the answer.
-- Record only evidence-backed reusable facts or procedures. Facts go to memory/ad-hoc notes; repeated procedures go to skills; one-off runtime state, transient errors, guesses, and secrets are discarded. Redact sensitive sources and date facts likely to change.
+- The local knowledge base is maintained in `~/llm-wiki/`. Search it when a task may depend on prior project, domain, operational, or workflow knowledge.
+- Maintain evidence-backed reusable knowledge in `~/llm-wiki/`; repeated procedures go to skills; one-off runtime state, transient errors, guesses, and secrets are discarded. Redact sensitive sources and date facts likely to change.
+- Do not manually maintain `~/.codex/memories/` or ad-hoc memory notes. Consult memory only when historical task context is needed, and verify current sources before relying on it.
 - Shared skills live in `~/.codex/skills/` and must include trigger, inputs, workflow, verification, output, and safety.
 - When a valuable code test or example would be reusable, convert it into a snippet and maintain it in the snippets skill. Sync the skill mirror and verify parity.
-- The local knowledge base is maintained in `~/llm-wiki/`. Add reusable project, domain, operational, or workflow knowledge whenever a task produces material worth preserving.
 
 ## File & Sync Rules
 
-- Use Codex memory, local skills, repo docs, and `~/llm-wiki/` as current sources. Use legacy profile files only as historical references.
-- When memory cites external paths, use memory first. Inspect the original path only when the needed fact is missing or must be refreshed.
+- Use local skills, current repo docs, and `~/llm-wiki/` as current sources. Use Codex memory and legacy profile files only as historical references.
+- When historical memory cites external paths, inspect the current source before relying on it.
 - When changing shared skills or global instructions, edit the tracked copy, sync it to the live copy, and verify parity:
   - Skills: `~/.codex/skills/` <-> `~/dotfiles/.codex/skills/`
   - Instructions: edit `~/dotfiles/.codex/AGENTS.md`, run `bash ~/dotfiles/bootstrap.sh --force`, then compare it with `~/.codex/AGENTS.md`
