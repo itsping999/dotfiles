@@ -2,30 +2,10 @@
 
 ## Knowledge & Learning
 
-- The local knowledge base is maintained in `~/llm-wiki/`. Search it when a task may depend on prior project, domain, operational, or workflow knowledge.
-- Maintain evidence-backed reusable knowledge in `~/llm-wiki/`; repeated procedures go to skills; one-off runtime state, transient errors, guesses, and secrets are discarded. Redact sensitive sources and date facts likely to change.
-- Do not manually maintain `~/.codex/memories/` or ad-hoc memory notes. Consult memory only when historical task context is needed, and verify current sources before relying on it.
-- Shared skills live in `~/.codex/skills/` and must include trigger, inputs, workflow, verification, output, and safety.
-- When a valuable code test or example would be reusable, convert it into a snippet and maintain it in the snippets skill. Sync the skill mirror and verify parity.
+- Maintain evidence-backed reusable project, domain, operational, and workflow knowledge in `~/llm-wiki/`; search it when prior knowledge may matter. Redact sensitive sources and date facts likely to change.
+- Repeated procedures go to `~/.codex/skills/`; reusable code tests and examples go to the snippets skill; one-off runtime state, transient errors, guesses, and secrets are discarded.
 
-## File & Sync Rules
-
-- Use local skills, current repo docs, and `~/llm-wiki/` as current sources. Use Codex memory and legacy profile files only as historical references.
-- When historical memory cites external paths, inspect the current source before relying on it.
-- When changing shared skills or global instructions, edit the tracked copy, sync it to the live copy, and verify parity:
-  - Skills: `~/.codex/skills/` <-> `~/dotfiles/.codex/skills/`
-  - Instructions: edit `~/dotfiles/.codex/AGENTS.md`, run `bash ~/dotfiles/bootstrap.sh --force`, then compare it with `~/.codex/AGENTS.md`
-- After changing a skill or instruction, run a lightweight check: inspect the changed section, compare synced copies, and remove obsolete wording introduced by the change.
-
-## Operating Rules
-
-- Fix the source of the failing behavior. Use a temporary mitigation only when the source fix is blocked; label it temporary and state what still needs the source fix.
-- Git commits use Conventional Commits: `<type>(<scope>): <subject>`. Each commit must include a body explaining what changed and why. Use `BREAKING CHANGE:` for breaking changes.
-- After each functional node, stage only related files and create one local commit. A functional node is a coherent behavior change that can be verified on its own.
-
-## Engineering Rules
-
-# 01 — Karpathy Core
+## Karpathy Core
 
 Behavioral guidelines to reduce common LLM coding mistakes.
 Adapted from Andrej Karpathy's observations. Soft recommendations — apply
@@ -36,7 +16,7 @@ reduce costly mistakes on non-trivial work, not to slow down simple tasks.
 
 ---
 
-## 1. Think Before Coding
+### 1. Think Before Coding
 
 *Don't assume. Don't hide confusion. Surface tradeoffs.*
 
@@ -47,7 +27,7 @@ Before implementing:
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
 
-## 2. Simplicity First
+### 2. Simplicity First
 
 *Minimum code that solves the problem. Nothing speculative.*
 
@@ -62,7 +42,7 @@ Before implementing:
 Self-check: "Would a senior engineer say this is overcomplicated?"
 If yes, simplify before submitting.
 
-## 3. Surgical Changes
+### 3. Surgical Changes
 
 *Touch only what you must. Clean up only your own mess.*
 
@@ -82,7 +62,7 @@ When your changes create orphans:
 
 The test: every changed line should trace directly to the user's request.
 
-## 4. Goal-Driven Execution
+### 4. Goal-Driven Execution
 
 *Define success criteria. Loop until verified.*
 
@@ -108,7 +88,3 @@ Strong success criteria allow independent loops. Weak criteria
 **Working signs:** fewer unnecessary changes in diffs, fewer rewrites
 due to overcomplication, clarifying questions before implementation
 rather than after mistakes.
-
-## Communication Style
-
-- Answer first, then add enough context for the user to act confidently. Expand reasoning, options, and verification details when they improve the outcome.
