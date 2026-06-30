@@ -67,7 +67,7 @@ bash ./pacman.sh
 
 ## Notes
 
-- `bootstrap.sh` excludes package manifests/scripts, README, Git metadata, CI metadata, tracked skills, and `.DS_Store`.
+- `bootstrap.sh` excludes package manifests/scripts, the root `AGENTS.md`, README, Git metadata, CI metadata, tracked skills, and `.DS_Store`; `.codex/AGENTS.md` remains included and syncs to `~/.codex/AGENTS.md`.
 - `bootstrap.sh --delete-skills` makes skill sync mirror the tracked directory by deleting local-only files, while preserving Codex system skill directories such as `.system/`.
 - Shell `path`/`fpath` entries are de-duplicated by zsh.
 - Default editor is `vim`.

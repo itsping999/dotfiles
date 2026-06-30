@@ -5,7 +5,7 @@
 - Treat files here as source-of-truth for repeatable local setup. Live home-directory copies may drift, so inspect both sides before changing synced global Codex assets.
 
 ## Project Map
-- `bootstrap.sh` syncs dotfiles and shared Codex skills into `$HOME`. It excludes package scripts/manifests, Git metadata, `.agents/`, `.codex/skills/`, README, and `.DS_Store` from the main sync. It also syncs `.codex/skills/` into `~/.codex/skills/`: repo files overwrite local, new repo files are added, local-only files are preserved. Use `--delete-skills` for mirror mode.
+- `bootstrap.sh` syncs dotfiles and shared Codex skills into `$HOME`. It excludes package scripts/manifests, Git metadata, `.agents/`, `.codex/skills/`, the root `AGENTS.md`, README, and `.DS_Store` from the main sync. The tracked `.codex/AGENTS.md` remains included and syncs to `~/.codex/AGENTS.md`. It also syncs `.codex/skills/` into `~/.codex/skills/`: repo files overwrite local, new repo files are added, local-only files are preserved. Use `--delete-skills` for mirror mode.
 - `brew.sh` installs macOS packages from `Brewfile`; it also taps `farion1231/ccswitch` before running `brew bundle`.
 - `pacman.sh` installs the Arch Linux package array directly from that script and requires `yay`.
 - `.codex/AGENTS.md` is the dotfiles-tracked mirror of the live global Codex instructions, not the project-level instructions for this repo.
@@ -22,7 +22,7 @@
 | Arch package list | `pacman.sh` | The `packages` array is the install list. The script exits if `yay` is missing. |
 | Dotfile sync exclusions | `bootstrap.sh` | Update `rsync_args` when adding repo files that should not be copied into `$HOME`. |
 | Shared skill sync | `bootstrap.sh` and `.codex/skills/` | `bootstrap.sh` syncs skills without `--delete` by default (repo overwrites local, adds new, preserves local-only). Use `--delete-skills` for mirror mode, which still excludes `.system/` and `codex-primary-runtime/`. |
-| Global Codex instructions | `.codex/AGENTS.md` and `~/.codex/AGENTS.md` | Change both copies when updating global instructions, then verify parity. |
+| Global Codex instructions | `.codex/AGENTS.md` and `~/.codex/AGENTS.md` | Edit the tracked copy and run `bash ./bootstrap.sh --force`, then verify parity. |
 | Tracked shared Codex skills | `.codex/skills/` and `~/.codex/skills/` | Change both live and tracked copies when maintaining shared skills, or edit tracked copy and run `bash ./bootstrap.sh --force` to sync live. |
 | Shell CI coverage | `.github/workflows/shell-checks.yml` | CI currently checks `bootstrap.sh`, `brew.sh`, and `pacman.sh`; update the workflow when adding another maintained shell script. |
 | Docker daemon config | `.docker/daemon.json` | Global daemon settings; `bootstrap.sh` syncs this into `~/.docker/daemon.json`. Restart Docker after changes. |
@@ -36,6 +36,7 @@
 | Sync dotfiles with backup | `bash ./bootstrap.sh --force --backup` |
 | Preview skill sync | `bash ./bootstrap.sh --dry-run` |
 | Sync tracked skills to live Codex | `bash ./bootstrap.sh --force` |
+| Sync tracked global instructions | `bash ./bootstrap.sh --force` |
 | Check Brewfile without upgrades | `brew bundle check --no-upgrade --file Brewfile` |
 | Preview Homebrew actions | `bash ./brew.sh --dry-run` |
 | Shell syntax check | `bash -n bootstrap.sh brew.sh pacman.sh` |
@@ -64,9 +65,10 @@
 4. Use `bash ./bootstrap.sh --dry-run --delete-skills` only to preview destructive mirror cleanup. Do not remove local-only or system skills unless the user explicitly asks.
 
 ### Change Global Codex Instructions
-1. Edit both `~/.codex/AGENTS.md` and `.codex/AGENTS.md`, or edit one and copy it to the other.
-2. Verify parity with `cmp -s ~/.codex/AGENTS.md .codex/AGENTS.md`.
-3. Inspect the changed section after syncing so stale or duplicate wording does not remain.
+1. Edit `.codex/AGENTS.md` as the tracked source.
+2. Run `bash ./bootstrap.sh --dry-run` and confirm `.codex/AGENTS.md` appears when the live copy differs.
+3. Apply with `bash ./bootstrap.sh --force`, then verify parity with `cmp -s ~/.codex/AGENTS.md .codex/AGENTS.md`.
+4. Inspect the changed section after syncing so stale or duplicate wording does not remain.
 
 ### Build Or Update Docker Images
 1. Edit the relevant `Dockerfile` under `dockerfiles/<image-name>/`.
@@ -90,6 +92,7 @@
 
 ## Common Pitfalls
 - Do not treat `.codex/AGENTS.md` as this repo's root agent guide; it is a tracked global-instruction mirror.
+- The root `AGENTS.md` is excluded with the anchored rsync pattern `/AGENTS.md`; do not broaden it or `.codex/AGENTS.md` will stop syncing.
 - `bootstrap.sh` now syncs skills by default. Use `--delete-skills` for mirror mode; without it, local-only skills are preserved.
 - Do not use `brew list --formula` alone to decide what belongs in `Brewfile`; it includes dependencies.
 - Do not delete `~/.codex/skills/.system/` or runtime-provided skill directories during skill sync cleanup.

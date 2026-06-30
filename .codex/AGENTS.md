@@ -11,9 +11,9 @@
 
 - Use Codex memory, local skills, repo docs, and `~/wiki/` as current sources. Use legacy profile files only as historical references.
 - When memory cites external paths, use memory first. Inspect the original path only when the needed fact is missing or must be refreshed.
-- When changing shared skills or global instructions, edit both copies and verify parity:
+- When changing shared skills or global instructions, edit the tracked copy, sync it to the live copy, and verify parity:
   - Skills: `~/.codex/skills/` <-> `~/dotfiles/.codex/skills/`
-  - Instructions: `~/.codex/AGENTS.md` <-> `~/dotfiles/.codex/AGENTS.md`
+  - Instructions: edit `~/dotfiles/.codex/AGENTS.md`, run `bash ~/dotfiles/bootstrap.sh --force`, then compare it with `~/.codex/AGENTS.md`
 - After changing a skill or instruction, run a lightweight check: inspect the changed section, compare synced copies, and remove obsolete wording introduced by the change.
 
 ## Operating Rules
