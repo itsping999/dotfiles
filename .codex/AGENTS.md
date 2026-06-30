@@ -6,10 +6,11 @@
 - Record only evidence-backed reusable facts or procedures. Facts go to memory/ad-hoc notes; repeated procedures go to skills; one-off runtime state, transient errors, guesses, and secrets are discarded. Redact sensitive sources and date facts likely to change.
 - Shared skills live in `~/.codex/skills/` and must include trigger, inputs, workflow, verification, output, and safety.
 - When a valuable code test or example would be reusable, convert it into a snippet and maintain it in the snippets skill. Sync the skill mirror and verify parity.
+- The local knowledge base is maintained in `~/llm-wiki/`. Add reusable project, domain, operational, or workflow knowledge whenever a task produces material worth preserving.
 
 ## File & Sync Rules
 
-- Use Codex memory, local skills, repo docs, and `~/wiki/` as current sources. Use legacy profile files only as historical references.
+- Use Codex memory, local skills, repo docs, and `~/llm-wiki/` as current sources. Use legacy profile files only as historical references.
 - When memory cites external paths, use memory first. Inspect the original path only when the needed fact is missing or must be refreshed.
 - When changing shared skills or global instructions, edit the tracked copy, sync it to the live copy, and verify parity:
   - Skills: `~/.codex/skills/` <-> `~/dotfiles/.codex/skills/`
