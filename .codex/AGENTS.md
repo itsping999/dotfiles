@@ -87,3 +87,15 @@ Strong success criteria allow independent loops. Weak criteria
 **Working signs:** fewer unnecessary changes in diffs, fewer rewrites
 due to overcomplication, clarifying questions before implementation
 rather than after mistakes.
+
+## Git Branching
+
+- Unless the user explicitly specifies another starting point, create every development branch from the repository's `master` or `main` branch. Determine which of those branches is applicable before creating a branch, and do not implicitly branch from another development branch.
+
+## Git Commits
+
+- Write all Git commit messages in English.
+
+## Time Storage and Time Zones
+
+- For every code path that persists time-related data, explicitly assess cross-time-zone effects. Define whether each value is an absolute instant or a local wall-clock time, use an unambiguous storage representation, and verify time-zone handling on both write and read paths; never rely implicitly on the host, process, or database time zone.
