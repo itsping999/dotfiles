@@ -33,6 +33,7 @@ do_it() {
         --exclude ".github/"
         --exclude ".agents/"
         --exclude ".codex/skills/"
+        --exclude ".codex/config.toml"
         --exclude ".docker/"
         --exclude ".orbstack/"
         --exclude "dockerfiles/"

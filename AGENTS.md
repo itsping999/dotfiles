@@ -4,7 +4,7 @@ This repository is the source of truth for personal dotfiles, package bootstrap 
 
 ## Sync boundaries
 
-- `bootstrap.sh` syncs the repository into `$HOME`, excluding `.git/`, `.github/`, `.agents/`, `.codex/skills/`, `.docker/`, `.orbstack/`, `dockerfiles/`, `bootstrap.sh`, `pacman.sh`, `brew.sh`, `Brewfile`, `README.md`, root `/AGENTS.md`, `LICENSE-MIT.txt`, and `.DS_Store`.
+- `bootstrap.sh` syncs the repository into `$HOME`, excluding `.git/`, `.github/`, `.agents/`, `.codex/skills/`, `.codex/config.toml`, `.docker/`, `.orbstack/`, `dockerfiles/`, `bootstrap.sh`, `pacman.sh`, `brew.sh`, `Brewfile`, `README.md`, root `/AGENTS.md`, `LICENSE-MIT.txt`, and `.DS_Store`.
 - `.codex/AGENTS.md` is included in the main sync and mirrors `~/.codex/AGENTS.md`.
 - `.codex/skills/` is synced separately as an authoritative mirror: tracked files overwrite or add files, and local-only files are removed by default. `--preserve-local-skills` opts out; `.system/` and `codex-primary-runtime/` remain protected.
 - `.docker/daemon.json` is the tracked Docker engine configuration. It is applied to OrbStack with `bootstrap.sh --apply-orbstack-docker` or manually to the engine-specific path. `dockerfiles/` is repository-only and is not copied to `$HOME`.
@@ -46,6 +46,7 @@ This repository is the source of truth for personal dotfiles, package bootstrap 
 ### Mirrored Codex assets
 
 - Edit tracked copies under `.codex/`, preview with `--dry-run`, apply with `bash ./bootstrap.sh --force`, then verify with `cmp` or an rsync checksum comparison. Use `--preserve-local-skills` only for a machine that intentionally keeps local-only skills.
+- Keep `.codex/config.toml` local-only; it may contain machine-specific MCP configuration and is intentionally excluded from the main sync.
 - Keep each skill self-contained: update its `SKILL.md` and referenced scripts, templates, references, notices, or licenses together.
 - `--delete-skills` is retained for compatibility; default skill sync is authoritative, while `.system/` and `codex-primary-runtime/` remain protected.
 

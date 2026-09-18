@@ -79,7 +79,7 @@ bash ./pacman.sh
 
 ## Notes
 
-- bootstrap.sh excludes package manifests/scripts, the root AGENTS.md, README, Git metadata, CI metadata, tracked skills, Docker engine configuration, and .DS_Store; .codex/AGENTS.md remains included and syncs to ~/.codex/AGENTS.md.
+- bootstrap.sh excludes package manifests/scripts, the root AGENTS.md, README, Git metadata, CI metadata, tracked skills, .codex/config.toml, Docker engine configuration, and .DS_Store; .codex/AGENTS.md remains included and syncs to ~/.codex/AGENTS.md. The Codex config stays local because it may contain machine-specific MCP settings.
 - bootstrap.sh --apply-orbstack-docker copies .docker/daemon.json to ~/.orbstack/config/docker.json and restarts OrbStack's Docker engine. It is opt-in because restarting the engine can interrupt running containers.
 - bootstrap.sh mirrors .codex/skills by deleting local-only files, while preserving Codex system skill directories such as .system/; use --preserve-local-skills to opt out.
 - Shell path/fpath entries are de-duplicated by zsh.
