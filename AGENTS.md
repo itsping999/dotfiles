@@ -48,6 +48,7 @@ This repository is the source of truth for personal dotfiles, package bootstrap 
 - Edit tracked copies under `.codex/`, preview with `--dry-run`, apply with `bash ./bootstrap.sh --force`, then verify with `cmp` or an rsync checksum comparison. Use `--preserve-local-skills` only for a machine that intentionally keeps local-only skills.
 - Keep `.codex/config.toml` local-only; it may contain machine-specific MCP configuration and is intentionally excluded from the main sync.
 - Keep each skill self-contained: update its `SKILL.md` and referenced scripts, templates, references, notices, or licenses together.
+- Keep repeatable procedures with their owning project, script, or skill, and discard temporary state and secrets.
 - `--delete-skills` is retained for compatibility; default skill sync is authoritative, while `.system/` and `codex-primary-runtime/` remain protected.
 
 ### Docker

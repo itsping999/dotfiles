@@ -1,4 +1,0 @@
-interface:
-  display_name: "Haiwell Device Remote Access"
-  short_description: "Generate verified Haiwell device remote-access links"
-  default_prompt: "Use $haiwell-device-remote-access to generate a verified production remote-access link for this device PN."

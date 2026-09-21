@@ -21,16 +21,16 @@ jobs:
 
       - name: Run shellcheck
         run: |
-          shell_files=(bootstrap.sh brew.sh pacman.sh)
+          shell_files=(bootstrap.sh brew.sh pacman.sh scripts/performance-monitor/monitor-linux.sh scripts/navicat-reset/navicat-reset-macos.sh)
           shellcheck "${shell_files[@]}"
 
       - name: Check shell syntax
         run: |
-          shell_files=(bootstrap.sh brew.sh pacman.sh)
+          shell_files=(bootstrap.sh brew.sh pacman.sh scripts/performance-monitor/monitor-linux.sh scripts/navicat-reset/navicat-reset-macos.sh)
           bash -n "${shell_files[@]}"
           zsh -n .zshrc
 
       - name: Check formatting
         run: |
-          shell_files=(bootstrap.sh brew.sh pacman.sh)
+          shell_files=(bootstrap.sh brew.sh pacman.sh scripts/performance-monitor/monitor-linux.sh scripts/navicat-reset/navicat-reset-macos.sh)
           shfmt -d -i 4 -ci "${shell_files[@]}"

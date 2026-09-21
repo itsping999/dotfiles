@@ -1,4 +1,0 @@
-interface:
-  display_name: "云平台项目组周报"
-  short_description: "低 Token 拉取、清洗并生成云平台项目组部门周报"
-  default_prompt: "Use $cloud-platform-weekly-report to prepare the current cloud platform team weekly report."

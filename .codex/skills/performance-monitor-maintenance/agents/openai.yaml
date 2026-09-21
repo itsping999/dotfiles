@@ -1,4 +1,0 @@
-interface:
-  display_name: "Generic Performance Detector"
-  short_description: "Generate readable Windows/Linux checks"
-  default_prompt: "Use $performance-monitor-maintenance to generate or update a readable, configurable Windows/Linux performance detector."

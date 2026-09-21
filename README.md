@@ -72,6 +72,7 @@ bash ./pacman.sh
 - .docker/daemon.json: Docker engine mirrors, BuildKit, log rotation, and address pools
 - .codex/skills: tracked shared Codex skills
 - .codex/AGENTS.md: tracked global Codex instructions
+- scripts/: tracked utility scripts, including performance monitoring, Tangdou downloading, and Navicat reset
 - Brewfile: macOS Homebrew package manifest
 - bootstrap.sh: syncs dotfiles into the home directory
 - brew.sh: macOS package bootstrap
