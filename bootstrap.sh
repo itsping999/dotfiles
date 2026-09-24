@@ -12,14 +12,14 @@ usage() {
     cat <<'EOF'
 Usage: bootstrap.sh [--force] [--dry-run] [--backup] [--preserve-local-skills] [--apply-orbstack-docker]
 
-Sync dotfiles and shared Codex skills into $HOME.
+Sync dotfiles and shared agent skills into $HOME.
 
 Options:
   -f, --force          Skip confirmation
   -n, --dry-run        Show files that would be synced without changing anything
   -b, --backup         Back up overwritten files with a timestamp suffix
   --preserve-local-skills
-                       Keep files in ~/.codex/skills that are not tracked in this repo
+                       Keep files in ~/.agents/skills that are not tracked in this repo
   --delete-skills      Deprecated compatibility flag; mirror mode is already the default
   --apply-orbstack-docker
                        Apply .docker/daemon.json to OrbStack and restart its Docker engine
@@ -31,9 +31,9 @@ do_it() {
     local -a rsync_args=(
         --exclude ".git/"
         --exclude ".github/"
-        --exclude ".agents/"
-        --exclude ".codex/skills/"
-        --exclude ".codex/config.toml"
+        --exclude ".agents/skills/"
+        --exclude ".agents/config.toml"
+        --exclude ".codex/"
         --exclude ".docker/"
         --exclude ".orbstack/"
         --exclude "dockerfiles/"
@@ -59,11 +59,11 @@ do_it() {
 
     rsync "${rsync_args[@]}" "$SCRIPT_DIR"/ "$HOME"/
 
-    # Sync .codex/skills/ into ~/.codex/skills/.
+    # Sync .agents/skills/ into ~/.agents/skills/.
     # Mirror mode: repo files overwrite local, new repo files are added, and local-only files
     # are removed (except .system/ and codex-primary-runtime/).
-    local skills_src="$SCRIPT_DIR/.codex/skills/"
-    local skills_dst="$HOME/.codex/skills/"
+    local skills_src="$SCRIPT_DIR/.agents/skills/"
+    local skills_dst="$HOME/.agents/skills/"
     local -a skills_rsync_args=(
         -avh
         --no-perms
@@ -78,7 +78,7 @@ do_it() {
     [[ "$DELETE_SKILLS" == true ]] && skills_rsync_args+=(--delete)
     [[ "$DRY_RUN" == true ]] && skills_rsync_args+=(--dry-run)
     local skills_backup_dir
-    skills_backup_dir="$HOME/.codex/skills-backups/$(date +%Y%m%d%H%M%S)"
+    skills_backup_dir="$HOME/.agents/skills-backups/$(date +%Y%m%d%H%M%S)"
     if [[ "$BACKUP" == true ]]; then
         skills_rsync_args+=(--backup --backup-dir="$skills_backup_dir")
     fi

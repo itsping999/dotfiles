@@ -70,8 +70,8 @@ bash ./pacman.sh
 - .gitconfig.local.example: private Git identity template
 - .config/git/ignore: global Git ignore rules
 - .docker/daemon.json: Docker engine mirrors, BuildKit, log rotation, and address pools
-- .codex/skills: tracked shared Codex skills
-- .codex/AGENTS.md: tracked global Codex instructions
+- .agents/skills: tracked shared agent skills
+- .agents/AGENTS.md: tracked global agent instructions
 - scripts/: tracked utility scripts, including performance monitoring, Tangdou downloading, and Navicat reset
 - Brewfile: macOS Homebrew package manifest
 - bootstrap.sh: syncs dotfiles into the home directory
@@ -80,9 +80,9 @@ bash ./pacman.sh
 
 ## Notes
 
-- bootstrap.sh excludes package manifests/scripts, the root AGENTS.md, README, Git metadata, CI metadata, tracked skills, .codex/config.toml, Docker engine configuration, and .DS_Store; .codex/AGENTS.md remains included and syncs to ~/.codex/AGENTS.md. The Codex config stays local because it may contain machine-specific MCP settings.
+- bootstrap.sh excludes package manifests/scripts, the root AGENTS.md, README, Git metadata, CI metadata, tracked skills, .agents/config.toml, Docker engine configuration, and .DS_Store; .agents/AGENTS.md remains included and syncs to ~/.agents/AGENTS.md. Machine-specific agent configuration stays local.
 - bootstrap.sh --apply-orbstack-docker copies .docker/daemon.json to ~/.orbstack/config/docker.json and restarts OrbStack's Docker engine. It is opt-in because restarting the engine can interrupt running containers.
-- bootstrap.sh mirrors .codex/skills by deleting local-only files, while preserving Codex system skill directories such as .system/; use --preserve-local-skills to opt out.
+- bootstrap.sh mirrors .agents/skills by deleting local-only files, while preserving system skill directories such as .system/; use --preserve-local-skills to opt out.
 - Shell path/fpath entries are de-duplicated by zsh.
 - .zshrc preserves machine-specific additions through ~/.zshrc.local.
 - The current machine's .bashrc and .zprofile remain local because they contain private or application-managed settings; only safe guards are maintained there.

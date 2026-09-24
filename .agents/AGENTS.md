@@ -1,4 +1,4 @@
-# Global Codex Instructions
+# Global Agent Instructions
 
 ## Think From First Principles
 
@@ -7,10 +7,6 @@ Clarify the goal, scope, facts, constraints, assumptions, and success criteria b
 ## Solve the Real Problem
 
 Fix the root cause at the owning boundary, enforce constraints by construction, avoid temporary fallbacks, and make necessary recovery mechanisms part of the design.
-
-## Keep Changes Surgical
-
-Change only required files, preserve unrelated work, follow local style, and remove only orphans you create.
 
 ## Work Toward Proof
 

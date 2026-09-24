@@ -1,12 +1,12 @@
 # Agent Instructions
 
-This repository is the source of truth for personal dotfiles, package bootstrap scripts, the global Codex instruction mirror, and shared skills. Keep changes scoped; inspect tracked and live copies before changing mirrored assets.
+This repository is the source of truth for personal dotfiles, package bootstrap scripts, the global agent instruction mirror, and shared skills. Keep changes scoped; inspect tracked and live copies before changing mirrored assets.
 
 ## Sync boundaries
 
-- `bootstrap.sh` syncs the repository into `$HOME`, excluding `.git/`, `.github/`, `.agents/`, `.codex/skills/`, `.codex/config.toml`, `.docker/`, `.orbstack/`, `dockerfiles/`, `bootstrap.sh`, `pacman.sh`, `brew.sh`, `Brewfile`, `README.md`, root `/AGENTS.md`, `LICENSE-MIT.txt`, and `.DS_Store`.
-- `.codex/AGENTS.md` is included in the main sync and mirrors `~/.codex/AGENTS.md`.
-- `.codex/skills/` is synced separately as an authoritative mirror: tracked files overwrite or add files, and local-only files are removed by default. `--preserve-local-skills` opts out; `.system/` and `codex-primary-runtime/` remain protected.
+- `bootstrap.sh` syncs the repository into `$HOME`, excluding `.git/`, `.github/`, `.agents/skills/`, `.agents/config.toml`, `.codex/`, `.docker/`, `.orbstack/`, `dockerfiles/`, `bootstrap.sh`, `pacman.sh`, `brew.sh`, `Brewfile`, `README.md`, root `/AGENTS.md`, `LICENSE-MIT.txt`, and `.DS_Store`.
+- `.agents/AGENTS.md` is included in the main sync and mirrors `~/.agents/AGENTS.md`.
+- `.agents/skills/` is synced separately as an authoritative mirror: tracked files overwrite or add files, and local-only files are removed by default. `--preserve-local-skills` opts out; `.system/` and `codex-primary-runtime/` remain protected.
 - `.docker/daemon.json` is the tracked Docker engine configuration. It is applied to OrbStack with `bootstrap.sh --apply-orbstack-docker` or manually to the engine-specific path. `dockerfiles/` is repository-only and is not copied to `$HOME`.
 
 ## Source of truth
@@ -16,8 +16,8 @@ This repository is the source of truth for personal dotfiles, package bootstrap 
 | macOS packages | `Brewfile`; required taps stay in `brew.sh` |
 | Arch packages | `pacman.sh` `packages` array |
 | Dotfile sync | `bootstrap.sh` |
-| Global Codex instructions | `.codex/AGENTS.md` ↔ `~/.codex/AGENTS.md` |
-| Shared skills | `.codex/skills/` ↔ `~/.codex/skills/` |
+| Global agent instructions | `.agents/AGENTS.md` ↔ `~/.agents/AGENTS.md` |
+| Shared skills | `.agents/skills/` ↔ `~/.agents/skills/` |
 | Docker daemon | `.docker/daemon.json` |
 | Docker images | `dockerfiles/<image>/Dockerfile` and its README |
 
@@ -43,10 +43,10 @@ This repository is the source of truth for personal dotfiles, package bootstrap 
 - `brew.sh` does not update Homebrew metadata unless `--update` is passed.
 - `pacman.sh` installs with `pacman`; a full `-Syu` requires `--upgrade-system`.
 
-### Mirrored Codex assets
+### Mirrored agent assets
 
-- Edit tracked copies under `.codex/`, preview with `--dry-run`, apply with `bash ./bootstrap.sh --force`, then verify with `cmp` or an rsync checksum comparison. Use `--preserve-local-skills` only for a machine that intentionally keeps local-only skills.
-- Keep `.codex/config.toml` local-only; it may contain machine-specific MCP configuration and is intentionally excluded from the main sync.
+- Edit tracked copies under `.agents/`, preview with `--dry-run`, apply with `bash ./bootstrap.sh --force`, then verify with `cmp` or an rsync checksum comparison. Use `--preserve-local-skills` only for a machine that intentionally keeps local-only skills.
+- Keep `.agents/config.toml` local-only; it may contain machine-specific MCP configuration and is intentionally excluded from the main sync.
 - Keep each skill self-contained: update its `SKILL.md` and referenced scripts, templates, references, notices, or licenses together.
 - Keep repeatable procedures with their owning project, script, or skill, and discard temporary state and secrets.
 - `--delete-skills` is retained for compatibility; default skill sync is authoritative, while `.system/` and `codex-primary-runtime/` remain protected.
@@ -64,9 +64,9 @@ This repository is the source of truth for personal dotfiles, package bootstrap 
 
 ## Pitfalls
 
-- Root `AGENTS.md` is excluded from sync; edit `.codex/AGENTS.md` for global Codex instructions.
+- Root `AGENTS.md` is excluded from sync; edit `.agents/AGENTS.md` for global agent instructions.
 - `brew list --formula` includes dependencies; use `brew leaves` when maintaining `Brewfile`.
-- `.codex/skills` mirror cleanup protects `.system/` and `codex-primary-runtime/`; use `--preserve-local-skills` to retain other local-only skills.
+- `.agents/skills` mirror cleanup protects `.system/` and `codex-primary-runtime/`; use `--preserve-local-skills` to retain other local-only skills.
 - Do not change the cross-compile image platform without replacing the x86_64-only Linaro toolchains.
 
 ## Maintenance
