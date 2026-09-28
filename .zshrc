@@ -2,6 +2,9 @@
 
 typeset -U path fpath
 
+export LANG="en_US.UTF-8"
+export LC_CTYPE="en_US.UTF-8"
+
 if [[ -x /opt/homebrew/bin/brew ]]; then
 	eval "$(/opt/homebrew/bin/brew shellenv)"
 elif [[ -x /usr/local/bin/brew ]]; then

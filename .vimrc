@@ -132,3 +132,27 @@ nnoremap <leader>fk :CocCommand fzf-preview.ProjectGrep<Space>
 
 " floaterm
 let g:floaterm_autoclose = 1
+
+" markdown preview in terminal via glow + floaterm
+function! MarkdownPreview() abort
+	if !executable('glow')
+		echohl ErrorMsg | echom 'glow is not installed' | echohl None
+		return
+	endif
+	let l:tmp = tempname() . '.md'
+	call writefile(getline(1, '$'), l:tmp)
+	let l:width = max([40, float2nr(&columns * 0.85) - 4])
+	let l:cmd = printf('sh -c "CLICOLOR_FORCE=1 glow -s dark -w %d %s | less -R; rm -f %s"',
+		\ l:width, shellescape(l:tmp), shellescape(l:tmp))
+	call floaterm#new(v:false, l:cmd, {}, {
+		\ 'name': 'markdown-preview',
+		\ 'wintype': 'float',
+		\ 'width': 0.85,
+		\ 'height': 0.85,
+		\ 'title': ' Markdown Preview (q to close) ',
+		\ 'autoclose': 2,
+		\ })
+endfunction
+command! MarkdownPreview call MarkdownPreview()
+command! MarkdownPreviewToggle call MarkdownPreview()
+nnoremap <silent> <leader>mp :MarkdownPreview<CR>

@@ -32,6 +32,7 @@ packages=(
     docker
     ffmpeg
     git-lfs
+    glow
 )
 
 usage() {
