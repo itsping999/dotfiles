@@ -10,6 +10,8 @@ docker build -t go-cross-compile-builder:latest .
 
 The image defaults to `linux/amd64` because the bundled Linaro cross toolchains are x86_64 binaries. The base image is `debian:jessie-slim` by default. It uses glibc 2.19 to keep native CGO builds compatible with the previous Ubuntu 16.04/glibc 2.23 baseline. Jessie is end-of-life, so the Dockerfile uses archived Debian repositories. The toolchain defaults use a tested GitHub mirror because the former Linaro release URLs are no longer downloadable. Override `BASE_IMAGE`, `IMAGE_PLATFORM`, `GCC_ARM_URL`, or `GCC_AARCH64_URL` when required.
 
+The Linaro archives ship unstripped host binaries and debug info in the target sysroot. The build strips them in the same layer and removes components that CGO C/C++ builds do not use (Fortran, gdb, docs, man pages, locales, and the Go `test`, `api`, `doc`, and `misc` directories). This shrinks the image from about 2.5 GB to about 0.85 GB. With the same Go version, produced binaries are byte-identical, except that static ARM (32-bit) links may order ARM/Thumb interworking veneers differently; section layout and behavior are unchanged. Install `gdb` or `gfortran` separately if a build ever needs them.
+
 Go defaults to the latest stable release from `go.dev`. Pin a specific version when reproducible builds are required:
 
 ```bash

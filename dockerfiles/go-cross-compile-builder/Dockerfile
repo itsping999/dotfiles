@@ -75,5 +75,26 @@ RUN sed -i '/^deb /d' /etc/apt/sources.list && \
         fi; \
         sleep 2; \
     done && \
+    # The Linaro releases ship unstripped host binaries and debug info in the
+    # target sysroot (about 2 GB). Strip them in this same layer and drop the
+    # parts that CGO C/C++ builds never use (Fortran, gdb, docs, locales).
+    for toolchain in /opt/gcc-linaro-*; do \
+        gcc_path="$(ls "${toolchain}"/bin/*-gcc | head -n 1)" && \
+        triplet="$(basename "${gcc_path}" -gcc)" && \
+        rm -rf "${toolchain:?}"/share/{doc,info,man,locale,dejagnu,gdb} \
+            "${toolchain:?}/bin/${triplet}-gdb" \
+            "${toolchain:?}/bin/${triplet}-gfortran" \
+            "${toolchain:?}"/libexec/gcc/"${triplet}"/*/f951 \
+            "${toolchain:?}/${triplet}/libc/usr/share" && \
+        find "${toolchain}/bin" "${toolchain}/libexec" "${toolchain}/${triplet}/bin" \
+            -type f -perm -u+x -exec sh -c \
+            'head -c 4 "$1" | grep -q ELF && strip --strip-unneeded "$1" 2>/dev/null || true' \
+            _ {} \; && \
+        find "${toolchain}/${triplet}" "${toolchain}/lib" -type f \
+            \( -name '*.so*' -o -name '*.a' -o -name '*.o' \) \
+            -exec sh -c '"$0" --strip-debug "$1" 2>/dev/null || true' \
+            "${toolchain}/bin/${triplet}-strip" {} \; || exit 1; \
+    done && \
+    rm -rf /usr/local/go/{test,api,doc,misc} && \
     apt-get purge -y --auto-remove xz-utils && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
