@@ -4,8 +4,12 @@ FROM --platform=${IMAGE_PLATFORM} ${BASE_IMAGE}
 
 ARG GO_VERSION=latest
 
+# Linaro no longer serves these releases, so the defaults point at mirrors.
+# Each archive is pinned by SHA-256; override the URL and checksum together.
 ARG GCC_ARM_URL=https://github.com/YuzukiHD/sunxi-bsp-toolchains/releases/download/1.0.0/gcc-linaro-5.3.1-2016.05-x86_64_arm-linux-gnueabi.tar.xz
-ARG GCC_AARCH64_URL=https://github.com/YuzukiHD/sunxi-bsp-toolchains/releases/download/1.0.0/gcc-linaro-5.3.1-2016.05-x86_64_aarch64-linux-gnu.tar.xz
+ARG GCC_ARM_SHA256=77cccd433d680251c8b9bfa01890cb6921548513a39fac35c1f4b9f0a47e5aa4
+ARG GCC_AARCH64_URL=https://dl.armbian.com/_toolchain/gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu.tar.xz
+ARG GCC_AARCH64_SHA256=27f1dc2c491ed61ae8f0d4b0c11de59cd2f7dd9c94761ee7153006fcac1bf9ab
 
 ENV GOPATH=/go
 ENV PATH="/go/bin:/usr/local/go/bin:${PATH}"
@@ -14,7 +18,26 @@ WORKDIR /app
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN sed -i '/^deb /d' /etc/apt/sources.list && \
+RUN download() { \
+        local url="$1" output="$2" attempt; \
+        rm -f "${output}"; \
+        for attempt in 1 2 3 4 5 6 7 8; do \
+            if curl -fsSL --continue-at - --output "${output}" "${url}"; then \
+                return 0; \
+            fi; \
+            sleep 2; \
+        done; \
+        echo "failed to download ${url}" >&2; \
+        return 1; \
+    } && \
+    install_toolchain() { \
+        local url="$1" sha256="$2" archive=/tmp/toolchain.tar.xz; \
+        download "${url}" "${archive}" && \
+        echo "${sha256}  ${archive}" | sha256sum -c - && \
+        tar -xJf "${archive}" -C /opt && \
+        rm -f "${archive}"; \
+    } && \
+    sed -i '/^deb /d' /etc/apt/sources.list && \
     printf '%s\n' \
         'deb [trusted=yes] http://archive.debian.org/debian jessie main' \
         'deb [trusted=yes] http://archive.debian.org/debian-security jessie/updates main' \
@@ -40,41 +63,12 @@ RUN sed -i '/^deb /d' /etc/apt/sources.list && \
     else \
         go_download_url="https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz"; \
     fi && \
-    go_archive=/tmp/go.tar.gz && \
-    rm -f "${go_archive}" && \
-    for attempt in 1 2 3 4 5 6 7 8; do \
-        if curl -fsSL --continue-at - --output "${go_archive}" \
-            "${go_download_url}"; then \
-            break; \
-        fi; \
-        if [[ "${attempt}" == "8" ]]; then \
-            exit 1; \
-        fi; \
-        sleep 2; \
-    done && \
-    tar -xzf "${go_archive}" -C /usr/local && \
+    download "${go_download_url}" /tmp/go.tar.gz && \
+    tar -xzf /tmp/go.tar.gz -C /usr/local && \
     ln -sf /usr/local/go/bin/go /usr/local/bin/go && \
     ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt && \
-    for attempt in 1 2 3 4 5 6 7 8; do \
-        if curl -fsSL --retry 5 --retry-delay 2 "${GCC_ARM_URL}" | \
-            tar -xJ -C /opt; then \
-            break; \
-        fi; \
-        if [[ "${attempt}" == "8" ]]; then \
-            exit 1; \
-        fi; \
-        sleep 2; \
-    done && \
-    for attempt in 1 2 3 4 5 6 7 8; do \
-        if curl -fsSL --retry 5 --retry-delay 2 "${GCC_AARCH64_URL}" | \
-            tar -xJ -C /opt; then \
-            break; \
-        fi; \
-        if [[ "${attempt}" == "8" ]]; then \
-            exit 1; \
-        fi; \
-        sleep 2; \
-    done && \
+    install_toolchain "${GCC_ARM_URL}" "${GCC_ARM_SHA256}" && \
+    install_toolchain "${GCC_AARCH64_URL}" "${GCC_AARCH64_SHA256}" && \
     # The Linaro releases ship unstripped host binaries and debug info in the
     # target sysroot (about 2 GB). Strip them in this same layer and drop the
     # parts that CGO C/C++ builds never use (Fortran, gdb, docs, locales).
