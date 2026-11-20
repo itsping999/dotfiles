@@ -1,6 +1,8 @@
+<!-- Local maintenance: normalize whitespace without changing rendered content. -->
+
 # 通讯录（组织架构）
 
-> **SKILL.md** 中 #8 仅内联 2 条 **lite**：`get-contact-self`、`search-user`。下列 recipe、专用规则与消歧请在命中 #8 且**超出**上述 lite 时阅读本文。
+> **SKILL.md** 中 #8 仅内联 2 条 **lite**：`get-contact-self`、`search-user`。下列 recipe、专用规则与消歧请在命中 #8 且**超出**上述 lite 时阅读本文。\
 > 产品命令见 [contact.md](../products/contact.md)。通用批量/并行见 [conventions.md](_common/conventions.md)。
 
 ## 专用规则（#8 非 lite 步骤必守）

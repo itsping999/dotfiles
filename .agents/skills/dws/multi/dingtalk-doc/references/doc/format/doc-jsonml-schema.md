@@ -1,3 +1,5 @@
+<!-- Local maintenance: normalize whitespace without changing rendered content. -->
+
 # 文档 JSONML 节点结构参考
 
 > **权威定义**：合法节点类型、允许的子节点和属性约束以 `wukong/products/jsonml-schema-v2.json` 为准。本文为可读版摘要，若与 schema-v2.json 冲突以后者为准。
